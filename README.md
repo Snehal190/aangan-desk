@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Aangan Desk
 
-## Getting Started
+Console for the Aangan Studio front desk and designers. Every call the voice
+agent answers becomes a report: why it was qualified (or not) against Nikhil's
+rubric, a handoff note, what not to re-ask, the booked consultation, and the
+full transcript. Nikhil sees the same leads in HubSpot.
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Vaani (call ends) ─▶ /api/webhooks/vaani ─▶ Gemini analysis ─▶ store
+                                                     ├─▶ Resend email to designer
+                                                     └─▶ HubSpot contact + deal + note
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Run locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env.local`. With no `DATABASE_URL` the console uses the
+sample calls in memory; with one, run `npm run db:setup -- --seed` once to
+create the table (drop `--seed` to start empty). Sign in with `TEAM_PASSCODE`.
 
-## Learn More
+## Deploy (Vercel + Neon)
 
-To learn more about Next.js, take a look at the following resources:
+1. Import the GitHub repo in Vercel (framework: Next.js, no overrides).
+2. Paste the variables from `.env.vercel` into Project → Settings → Environment
+   Variables, with `APP_URL` set to the deployed URL.
+3. Run `npm run db:setup` against the Neon database once.
+4. Give Vaani the webhook URL `<APP_URL>/api/webhooks/vaani` with header
+   `x-vaani-secret: <VAANI_WEBHOOK_SECRET>`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Where things live
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Path | What |
+|---|---|
+| `knowledge/` | services, rubric, pricing policy, past enquiries — the agent reads these |
+| `src/lib/seed.ts` | sample calls |
+| `src/lib/store.ts` | data access — Neon, or in-memory without `DATABASE_URL` |
+| `src/lib/auth.ts`, `src/proxy.ts` | shared-passcode login for front desk + designers |
+| `src/lib/integrations/` | one file per service; Gemini rotates across `GEMINI_API_KEYS` |
+| `src/lib/pipeline/process-call.ts` | what happens after a call ends |
+| `src/app/` | inbox `/`, report `/leads/[id]`, designer view `/designer`, `/setup`, `/login` |
 
-## Deploy on Vercel
+## Decisions so far
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Pricing: the agent may share the indicative range from `pricing.md`, always
+  with "the designer gives the final quote" — never a firm number.
+- One designer for now: Snehal Kapoor (snehalbandi5@gmail.com). Bookings block
+  that calendar; the handoff email goes there too.
+- Everyone with the passcode sees every lead: qualified (ranked by priority),
+  needs review, escalations, and not qualified with the reason.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Still needed
+
+- Neon `DATABASE_URL`
+- Cal.com API key, username and event slug
+- Vaani webhook / agent docs (payload shape, how the agent books mid-call)
+- HubSpot private app token, pipeline and stage IDs
