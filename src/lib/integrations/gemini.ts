@@ -21,6 +21,8 @@ export interface CallAnalysis {
   priority?: Priority;
   priorityReason?: string;
   language?: string;
+  callerEmail?: string;
+  emailConfirmed?: boolean;
   bookedSlot?: string;
   bookingMode?: "site_visit" | "studio" | "video";
 }
@@ -73,6 +75,11 @@ const RESPONSE_SCHEMA = {
     },
     nextStep: { type: "STRING" },
     priority: { type: "STRING", enum: ["high", "medium", "low"] },
+    callerEmail: {
+      type: "STRING",
+      description: "The caller's email as finally confirmed on the call, written normally (e.g. 'snehal.k@gmail.com' from 'snehal dot k at gmail dot com'). Omit if none was given.",
+    },
+    emailConfirmed: { type: "BOOLEAN", description: "True only if the caller confirmed the email when the agent read it back." },
     language: { type: "STRING", description: "Language(s) the caller used, e.g. 'English', 'Hinglish'" },
     bookedSlot: { type: "STRING", description: "ISO start of the consultation slot the caller accepted, copied exactly from the offered list. Omit if none was agreed." },
     bookingMode: { type: "STRING", enum: ["site_visit", "studio", "video"] },

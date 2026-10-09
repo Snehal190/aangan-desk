@@ -35,7 +35,7 @@ export const CRITERIA_ORDER: CriterionKey[] = [
 export const STATUS_META: Record<LeadStatus, { label: string; short: string }> = {
   qualified: { label: "Qualified", short: "Qualified" },
   needs_review: { label: "Needs review", short: "Review" },
-  not_fit: { label: "Not qualified", short: "Not qualified" },
+  not_fit: { label: "Disqualified", short: "Disqualified" },
   escalation: { label: "Escalation", short: "Escalate" },
 };
 

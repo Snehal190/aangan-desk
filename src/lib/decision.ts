@@ -20,10 +20,10 @@ export function agentDecision(lead: Lead): { title: string; body: string } {
       const designer = getDesigner(b?.designerId);
       if (b && designer && b.status === "confirmed") {
         return {
-          title: "Qualified · consultation booked",
-          body: `${why} So I booked a calendar slot with ${designer.name}: ${when(b.start)}, ${MODE_LABEL[b.mode].toLowerCase()}.${
-            b.emailSentAt ? ` The full report has been emailed to ${designer.name}.` : ""
-          }`,
+          title: "Qualified · designer's calendar blocked",
+          body: `${why} So I blocked ${designer.name}'s calendar: ${when(b.start)}, ${MODE_LABEL[b.mode].toLowerCase()}.${
+            lead.email && lead.emailConfirmed ? ` The invite went to ${lead.email}.` : ""
+          }${b.emailSentAt ? ` The full report has been emailed to ${designer.name}.` : ""}`,
         };
       }
       if (b && designer) {
@@ -41,8 +41,10 @@ export function agentDecision(lead: Lead): { title: string; body: string } {
     }
     case "not_fit":
       return {
-        title: "Not qualified",
-        body: `${name} did not qualify: ${fails.map((c) => c.reason).join(" ") || lead.handoffNote} I explained this politely on the call and did not book anything.`,
+        title: "Disqualified",
+        body: `${name} did not qualify: ${fails.map((c) => c.reason).join(" ") || lead.handoffNote} I explained this politely on the call and did not block any calendar.${
+          lead.email ? ` Their email is ${lead.email} if things change.` : ""
+        }`,
       };
     case "needs_review":
       return {

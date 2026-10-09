@@ -56,7 +56,14 @@ export default async function LeadReport({ params }: PageProps<"/desk/leads/[id]
           <span>{duration(lead.durationSec)} call</span>
           <span>Picked up in {lead.pickupSec}s</span>
           <span>{lead.language}</span>
-          <span>{lead.phone}</span>
+          {lead.email && (
+            <a href={`mailto:${lead.email}`} className="text-ink underline decoration-stone-300 underline-offset-4">
+              {lead.email}
+              {lead.emailConfirmed ? " ✓ confirmed" : " (not confirmed)"}
+            </a>
+          )}
+          {lead.phone && <span>{lead.phone}</span>}
+          {!lead.email && !lead.phone && <span className="text-coral-deep">No contact details</span>}
         </p>
       </Reveal>
 

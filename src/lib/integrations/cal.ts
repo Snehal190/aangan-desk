@@ -6,7 +6,7 @@ export async function bookConsultation(args: {
   designer: Designer;
   start: string;
   mode: Booking["mode"];
-  attendee: { name: string; phone: string; email?: string };
+  attendee: { name: string; email?: string; phone?: string };
   leadId: string;
 }): Promise<{ uid: string }> {
   if (!env.cal.apiKey) throw new NotConfiguredError("Cal.com");
@@ -24,10 +24,10 @@ export async function bookConsultation(args: {
       username: args.designer.calUsername,
       attendee: {
         name: args.attendee.name,
-        // Callers rarely give an email on the phone; the confirmation then goes
-        // to the designer's inbox instead.
+        // The caller's confirmed email gets the invite; without one it goes
+        // to the designer so the slot is still blocked.
         email: args.attendee.email ?? args.designer.email,
-        phoneNumber: args.attendee.phone,
+        ...(args.attendee.phone ? { phoneNumber: args.attendee.phone } : {}),
         timeZone: "Asia/Kolkata",
       },
       metadata: { leadId: args.leadId, mode: args.mode },

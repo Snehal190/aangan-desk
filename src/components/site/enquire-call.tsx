@@ -19,7 +19,8 @@ const clock = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padSta
 export function EnquireCall() {
   const [phase, setPhase] = useState<Phase>("form");
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailSaved, setEmailSaved] = useState(false);
   const [error, setError] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
   const [muted, setMuted] = useState(false);
@@ -93,7 +94,7 @@ export function EnquireCall() {
     const res = await fetch("/api/enquiry/start", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, phone }),
+      body: JSON.stringify({ name }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -141,14 +142,45 @@ export function EnquireCall() {
 
   const first = name.trim().split(" ")[0];
 
+  async function saveEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    const res = await fetch("/api/enquiry/contact", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ enquiryId: enquiryId.current, email }),
+    });
+    if (res.ok) setEmailSaved(true);
+    else setError((await res.json().catch(() => ({}))).error ?? "Please check the email and try again.");
+  }
+
+  if (phase === "fallback" && !emailSaved) {
+    return (
+      <form onSubmit={saveEmail} className="mx-auto max-w-md space-y-3 rounded-[2.5rem] bg-white p-8 text-center shadow-soft">
+        <p className="text-lg text-stone-700">We couldn&rsquo;t connect the call just now. Leave your email and the studio will reach out.</p>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@gmail.com"
+          autoComplete="email"
+          required
+          className="w-full rounded-full border border-stone-200 bg-stone-50 px-6 py-3.5 outline-none focus:border-coral"
+        />
+        {error && <p className="text-sm text-coral-deep">{error}</p>}
+        <button className="w-full rounded-full bg-ink px-6 py-3.5 font-medium text-cream">Send</button>
+      </form>
+    );
+  }
+
   if (phase === "ended" || phase === "fallback") {
     return (
       <div className="mx-auto max-w-md rounded-[2.5rem] bg-white p-8 text-center shadow-soft">
         <p className="font-hand text-4xl text-coral-deep">thank you{first ? `, ${first}` : ""}</p>
         <p className="mt-3 text-lg text-stone-700">
           {phase === "ended"
-            ? "Your designer will have the full conversation before you meet, so you won't need to repeat yourself. If we booked a time, it's on our calendar."
-            : "We couldn't connect the call just now, but we have your number — someone from the studio will call you back."}
+            ? "Your designer will have the full conversation before you meet, so you won't need to repeat yourself. If we booked a time, the calendar invite is on its way to your email."
+            : "Thanks — someone from the studio will email you shortly."}
         </p>
       </div>
     );
@@ -204,22 +236,13 @@ export function EnquireCall() {
         required
         className="w-full rounded-full border border-stone-200 bg-stone-50 px-6 py-3.5 outline-none focus:border-coral"
       />
-      <input
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Mobile number"
-        autoComplete="tel"
-        inputMode="tel"
-        required
-        className="w-full rounded-full border border-stone-200 bg-stone-50 px-6 py-3.5 outline-none focus:border-coral"
-      />
       {error && <p className="px-4 text-sm text-coral-deep">{error}</p>}
       <button className="w-full rounded-full bg-ink px-6 py-3.5 font-medium text-cream transition-transform duration-500 hover:scale-[1.03]">
         Call Aangan now
       </button>
       <p className="px-4 text-center text-xs leading-relaxed text-stone-400">
         You&rsquo;ll talk to our virtual assistant in your browser. The call is recorded and transcribed so your designer
-        has the full context; we use your number only to follow up on this enquiry.
+        has the full context. The assistant will ask for your email so we can follow up.
       </p>
     </form>
   );

@@ -29,7 +29,7 @@ const GROUPS: { status: LeadStatus; title: string; hint: string; dot: string; so
     dot: "bg-sage-deep",
     sort: (a, b) => RANK[a.priority ?? "low"] - RANK[b.priority ?? "low"] || newest(a, b),
   },
-  { status: "not_fit", title: "Not qualified", hint: "Closed politely on the call — reason on each card", dot: "bg-coral-deep", sort: newest },
+  { status: "not_fit", title: "Disqualified", hint: "Closed politely, no calendar blocked — reason on each card", dot: "bg-coral-deep", sort: newest },
 ];
 
 export default async function Inbox({ searchParams }: PageProps<"/desk">) {
@@ -106,7 +106,8 @@ export default async function Inbox({ searchParams }: PageProps<"/desk">) {
                   />
                   <div className="min-w-0">
                     <p className="font-medium">
-                      {e.name} <span className="font-normal text-muted">· {e.phone}</span>
+                      {e.name}
+                      {e.email && <span className="font-normal text-muted"> · {e.email}</span>}
                     </p>
                     <p className="text-sm text-muted">
                       {label} · started {when(e.startedAt)}

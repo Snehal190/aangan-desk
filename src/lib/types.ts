@@ -72,7 +72,11 @@ export interface ProjectFacts {
 export interface Lead {
   id: string;
   callerName: string;
-  phone: string;
+  /** Spoken by the caller and read back by the agent to confirm. */
+  email?: string;
+  emailConfirmed?: boolean;
+  /** Only for phone calls; website calls have none. */
+  phone?: string;
   language: string;
   receivedAt: string;
   durationSec: number;
@@ -104,7 +108,8 @@ export interface Lead {
 export interface Enquiry {
   id: string;
   name: string;
-  phone: string;
+  /** Left on the website if the call couldn't connect. */
+  email?: string;
   startedAt: string;
   endedAt?: string;
   roomName?: string;

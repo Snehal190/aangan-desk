@@ -41,6 +41,7 @@ export function LeadRow({ lead }: { lead: Lead }) {
         {lead.priority && <PriorityPill priority={lead.priority} />}
         <span className="text-sm text-stone-400">
           {when(lead.receivedAt)} · {duration(lead.durationSec)}
+          {lead.email ? ` · ${lead.email}` : ""}
         </span>
       </div>
       <div className="mt-3 flex items-baseline justify-between gap-4">

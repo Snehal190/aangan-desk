@@ -24,6 +24,7 @@ export async function sendHandoffEmail(lead: Lead, designer: Designer) {
     } <b>${esc(when(b.start))}</b> · ${MODE_LABEL[b.mode]} · ${b.durationMin} min.</p>
     <p style="background:#E8EFE8;padding:12px 16px;border-radius:12px"><b>${esc(decision.title)}</b><br>${esc(decision.body)}</p>
     <h3 style="margin-bottom:4px">${esc(lead.callerName)} — ${esc(lead.headline)}</h3>
+    <p style="margin-top:0;color:#78716C">${lead.email ? `${esc(lead.email)}${lead.emailConfirmed ? " (confirmed on the call)" : " (not confirmed — double-check)"}` : "No email given"}</p>
     <p>${esc(lead.handoffNote)}</p>
     <p><b>Already answered on the call — please don't re-ask:</b></p>
     <ul>${lead.alreadyAnswered.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>

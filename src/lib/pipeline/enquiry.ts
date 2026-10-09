@@ -21,7 +21,7 @@ export async function callbackLead(e: Enquiry, reason: string) {
   const lead: Lead = {
     id: `L-${e.id}`,
     callerName: e.name,
-    phone: e.phone,
+    email: e.email,
     language: "—",
     receivedAt: e.startedAt,
     durationSec: e.endedAt ? Math.max(0, Math.round((Date.parse(e.endedAt) - Date.parse(e.startedAt)) / 1000)) : 0,
@@ -34,7 +34,7 @@ export async function callbackLead(e: Enquiry, reason: string) {
     alreadyAnswered: [],
     openQuestions: ["What and where is the project?"],
     flags: ["Web enquiry", "Callback needed"],
-    nextStep: `Call ${e.name} back on ${e.phone}.`,
+    nextStep: e.email ? `Email ${e.name} at ${e.email} to pick up the enquiry.` : `No contact details yet — ${e.name} may leave an email or call again.`,
     transcript: [],
   };
   await saveLead(lead);
@@ -68,7 +68,6 @@ export async function finishEnquiry(enquiryId: string, given?: { transcript?: st
     const { lead } = await processCall({
       callId: e.id,
       callerName: e.name,
-      from: e.phone,
       startedAt: e.startedAt,
       durationSec: given?.durationSec ?? Math.round((Date.parse(endedAt) - Date.parse(e.startedAt)) / 1000),
       pickupSec: 0,

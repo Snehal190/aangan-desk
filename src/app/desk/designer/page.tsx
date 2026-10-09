@@ -95,7 +95,10 @@ function BookingCard({ lead }: { lead: Lead }) {
         <h3 className="text-xl font-medium tracking-tight text-stone-800 transition-colors duration-500 group-hover:text-coral-deep">
           {lead.callerName}
         </h3>
-        <p className="text-[15px] text-muted">{lead.headline}</p>
+        <p className="text-[15px] text-muted">
+          {lead.headline}
+          {lead.email ? ` · ${lead.email}` : ""}
+        </p>
         <p className="mt-3 line-clamp-2 text-[15px] text-stone-600">{lead.handoffNote}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <span className="rounded-full bg-sage px-2.5 py-0.5 text-xs text-sage-deep">
