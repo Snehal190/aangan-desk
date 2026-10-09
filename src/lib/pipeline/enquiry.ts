@@ -1,0 +1,90 @@
+import { openSlots } from "../agent/agent";
+import { fetchTranscript, parseTranscript } from "../integrations/vaani";
+import { claimEnquiry, getEnquiry, saveEnquiry, saveLead } from "../store";
+import type { Enquiry, Lead } from "../types";
+import { processCall } from "./process-call";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Vaani finishes transcription a little after hang-up; poll for ~45 s. */
+async function waitForTranscript(roomName: string) {
+  for (let i = 0; i < 9; i++) {
+    const t = await fetchTranscript(roomName).catch(() => null);
+    if (t) return t;
+    await sleep(5000);
+  }
+  return null;
+}
+
+/** A lead the front desk must call back — used when the call never really happened. */
+export async function callbackLead(e: Enquiry, reason: string) {
+  const lead: Lead = {
+    id: `L-${e.id}`,
+    callerName: e.name,
+    phone: e.phone,
+    language: "—",
+    receivedAt: e.startedAt,
+    durationSec: e.endedAt ? Math.max(0, Math.round((Date.parse(e.endedAt) - Date.parse(e.startedAt)) / 1000)) : 0,
+    pickupSec: 0,
+    status: "needs_review",
+    headline: `Website enquiry · ${reason}`,
+    project: { kind: "unknown", summary: "Not discussed", rooms: [] },
+    criteria: [],
+    handoffNote: `${e.name} tapped Enquire on the website, but ${reason.toLowerCase()}. Nothing about the project is known yet.`,
+    alreadyAnswered: [],
+    openQuestions: ["What and where is the project?"],
+    flags: ["Web enquiry", "Callback needed"],
+    nextStep: `Call ${e.name} back on ${e.phone}.`,
+    transcript: [],
+  };
+  await saveLead(lead);
+  return lead;
+}
+
+/**
+ * Turn a finished website call into a report. Safe to call from both the
+ * Vaani webhook and the browser's hang-up: whoever claims it first does it.
+ */
+export async function finishEnquiry(enquiryId: string, given?: { transcript?: string; durationSec?: number }) {
+  const e = await claimEnquiry(enquiryId);
+  if (!e) return;
+  const endedAt = e.endedAt ?? new Date().toISOString();
+
+  try {
+    const raw = given?.transcript ?? (e.roomName ? await waitForTranscript(e.roomName) : null);
+    if (!raw) {
+      // Leave it re-claimable: the webhook may still bring the transcript.
+      await saveEnquiry({ ...e, endedAt, status: "failed", error: "Transcript not ready yet — waiting for Vaani" });
+      return;
+    }
+
+    const transcript = parseTranscript(raw);
+    if (!transcript.some((t) => t.speaker === "caller")) {
+      const lead = await callbackLead({ ...e, endedAt }, "the call ended before they spoke");
+      await saveEnquiry({ ...e, endedAt, status: "done", leadId: lead.id });
+      return;
+    }
+
+    const { lead } = await processCall({
+      callId: e.id,
+      callerName: e.name,
+      from: e.phone,
+      startedAt: e.startedAt,
+      durationSec: given?.durationSec ?? Math.round((Date.parse(endedAt) - Date.parse(e.startedAt)) / 1000),
+      pickupSec: 0,
+      language: "English",
+      transcript,
+      offeredSlots: openSlots(new Date(e.startedAt)),
+      flags: ["Web enquiry"],
+    });
+    await saveEnquiry({ ...e, endedAt, status: "done", leadId: lead.id, error: undefined });
+  } catch (err) {
+    await saveEnquiry({ ...e, endedAt, status: "failed", error: String(err).slice(0, 300) });
+  }
+}
+
+export async function markEnded(enquiryId: string) {
+  const e = await getEnquiry(enquiryId);
+  if (e && !e.endedAt) await saveEnquiry({ ...e, endedAt: new Date().toISOString() });
+  return e;
+}

@@ -52,7 +52,7 @@ export function TestCall({ greeting }: { greeting: string }) {
       setPhase("error");
       return;
     }
-    router.push(`/leads/${data.leadId}`);
+    router.push(`/desk/leads/${data.leadId}`);
   }
 
   async function send(text: string) {

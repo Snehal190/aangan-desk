@@ -9,7 +9,7 @@ import { listLeads } from "@/lib/store";
 import type { Lead } from "@/lib/types";
 
 // Until sign-in exists, the designer picks themselves from the pills.
-export default async function DesignerView({ searchParams }: PageProps<"/designer">) {
+export default async function DesignerView({ searchParams }: PageProps<"/desk/designer">) {
   await requireSession();
   const raw = (await searchParams).d;
   const designer = getDesigner(typeof raw === "string" ? raw : undefined) ?? DESIGNERS[0];
@@ -41,7 +41,7 @@ export default async function DesignerView({ searchParams }: PageProps<"/designe
           {DESIGNERS.map((d) => (
             <Link
               key={d.id}
-              href={`/designer?d=${d.id}`}
+              href={`/desk/designer?d=${d.id}`}
               scroll={false}
               className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors duration-500 ${
                 d.id === designer.id ? "bg-ink text-cream" : "border border-stone-200 bg-white text-muted hover:text-ink"
@@ -82,7 +82,7 @@ function BookingCard({ lead }: { lead: Lead }) {
   const b = lead.booking!;
   return (
     <Link
-      href={`/leads/${lead.id}`}
+      href={`/desk/leads/${lead.id}`}
       className="group grid gap-4 rounded-[2rem] bg-white p-5 shadow-soft transition-transform duration-500 hover:-translate-y-0.5 sm:grid-cols-[120px_1fr] sm:p-6"
     >
       <div>

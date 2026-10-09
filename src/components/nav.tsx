@@ -4,20 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/", label: "Inbox" },
-  { href: "/designer", label: "My calls" },
-  { href: "/test-call", label: "Test call" },
-  { href: "/setup", label: "Setup", desktopOnly: true },
+  { href: "/desk", label: "Inbox" },
+  { href: "/desk/designer", label: "My calls" },
+  { href: "/desk/test-call", label: "Test call" },
+  { href: "/desk/setup", label: "Setup", desktopOnly: true },
 ];
 
 export function Nav({ attention }: { attention: number }) {
   const path = usePathname();
-  const active = (href: string) => (href === "/" ? path === "/" || path.startsWith("/leads") : path.startsWith(href));
+  const active = (href: string) =>
+    href === "/desk" ? path === "/desk" || path.startsWith("/desk/leads") : path.startsWith(href);
 
   return (
     <header className="fixed inset-x-0 top-4 z-40 flex justify-center px-4">
       <nav className="flex w-full max-w-3xl items-center gap-1 rounded-full border border-white/60 bg-white/70 py-2 pr-2 pl-3 shadow-soft backdrop-blur-[20px]">
-        <Link href="/" className="mr-1 flex items-center gap-2 sm:mr-3" aria-label="Aangan Desk home">
+        <Link href="/desk" className="mr-1 flex items-center gap-2 sm:mr-3" aria-label="Aangan Desk home">
           <span className="grid size-7 place-items-center rounded-full bg-coral">
             <span className="size-2 rounded-full bg-white" />
           </span>
@@ -37,7 +38,7 @@ export function Nav({ attention }: { attention: number }) {
           ))}
         </div>
         <Link
-          href="/?status=attention"
+          href="/desk?status=attention"
           aria-label={`Needs you: ${attention}`}
           className="flex items-center gap-2 rounded-full bg-ink px-3 py-2 sm:px-4 text-sm font-medium text-cream transition-transform duration-500 hover:scale-[1.03]"
         >

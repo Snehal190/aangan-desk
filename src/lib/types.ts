@@ -99,3 +99,16 @@ export interface Lead {
   transcript: TranscriptTurn[];
   hubspotDealId?: string;
 }
+
+/** A website enquiry call, tracked from "Call us" to finished report. */
+export interface Enquiry {
+  id: string;
+  name: string;
+  phone: string;
+  startedAt: string;
+  endedAt?: string;
+  roomName?: string;
+  status: "live" | "processing" | "done" | "failed";
+  leadId?: string;
+  error?: string;
+}

@@ -33,7 +33,7 @@ export function LeadRow({ lead }: { lead: Lead }) {
   const reason = verdictLine(lead);
   return (
     <Link
-      href={`/leads/${lead.id}`}
+      href={`/desk/leads/${lead.id}`}
       className={`group block rounded-[2rem] p-5 shadow-soft transition-transform duration-500 hover:-translate-y-0.5 sm:p-6 ${CARD[lead.status]}`}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">

@@ -4,15 +4,24 @@ import { env } from "../integrations/env";
 import { analyseCall } from "../integrations/gemini";
 import { syncLeadToHubSpot } from "../integrations/hubspot";
 import { sendHandoffEmail } from "../integrations/resend";
-import type { CallEnded } from "../integrations/vaani";
 import { saveLead } from "../store";
-import type { Booking, Lead } from "../types";
+import type { Booking, Lead, TranscriptTurn } from "../types";
+
+export interface CallInput {
+  callId: string;
+  from: string;
+  startedAt: string;
+  durationSec: number;
+  pickupSec: number;
+  language: string;
+  transcript: TranscriptTurn[];
+}
 
 // Call ended → analyse → book → save → email designer → sync HubSpot.
 // Every step after analysis is best-effort: the lead is saved first so it is
 // on the dashboard even if email, calendar or HubSpot fail.
 export async function processCall(
-  call: CallEnded & { booking?: Booking; offeredSlots?: string[]; flags?: string[] },
+  call: CallInput & { booking?: Booking; offeredSlots?: string[]; flags?: string[]; callerName?: string },
 ) {
   const { bookedSlot, bookingMode, language, ...analysis } = await analyseCall(call.transcript, {
     offeredSlots: call.offeredSlots,
@@ -27,6 +36,8 @@ export async function processCall(
 
   const lead: Lead = {
     ...analysis,
+    // The name typed on the website beats what the model heard.
+    callerName: call.callerName || analysis.callerName,
     id: `L-${call.callId}`,
     phone: call.from,
     language: language || call.language,

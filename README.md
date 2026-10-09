@@ -6,10 +6,17 @@ rubric, a handoff note, what not to re-ask, the booked consultation, and the
 full transcript. Nikhil sees the same leads in HubSpot.
 
 ```
-Vaani (call ends) ─▶ /api/webhooks/vaani ─▶ Gemini analysis ─▶ store
-                                                     ├─▶ Resend email to designer
-                                                     └─▶ HubSpot contact + deal + note
+Website "Enquire" (name + mobile)
+  └─▶ /api/enquiry/start ─▶ Vaani AI WebRTC call (our prompt from /knowledge + open slots)
+        visitor talks to the agent in the browser; agent books a slot if qualified
+  └─▶ hang-up ─▶ /api/enquiry/end ─┐
+      Vaani webhook (call_postprocessing) ─┴▶ transcript ─▶ Gemini rubric + handoff note
+                                              ├─▶ booking (Cal.com when connected, else "held")
+                                              ├─▶ Resend email to the designer
+                                              └─▶ /desk dashboard (+ HubSpot later)
 ```
+
+`/` is the public Aangan site; `/desk` is the team dashboard (passcode).
 
 ## Run locally
 
@@ -28,8 +35,8 @@ create the table (drop `--seed` to start empty). Sign in with `TEAM_PASSCODE`.
 2. Paste the variables from `.env.vercel` into Project → Settings → Environment
    Variables, with `APP_URL` set to the deployed URL.
 3. Run `npm run db:setup` against the Neon database once.
-4. Give Vaani the webhook URL `<APP_URL>/api/webhooks/vaani` with header
-   `x-vaani-secret: <VAANI_WEBHOOK_SECRET>`.
+4. In Vaani → Settings → Webhooks, add
+   `<APP_URL>/api/webhooks/vaani?key=<VAANI_WEBHOOK_SECRET>`.
 
 ## Where things live
 
@@ -56,5 +63,5 @@ create the table (drop `--seed` to start empty). Sign in with `TEAM_PASSCODE`.
 
 - Neon `DATABASE_URL`
 - Cal.com API key, username and event slug
-- Vaani webhook / agent docs (payload shape, how the agent books mid-call)
+- A working Vaani AI API key and the agent ID (Agent Config → Agent ID)
 - HubSpot private app token, pipeline and stage IDs

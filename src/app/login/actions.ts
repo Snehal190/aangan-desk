@@ -7,7 +7,7 @@ import { createSession, passcodeMatches, SESSION_COOKIE, SESSION_DAYS } from "@/
 export async function login(_: { error?: string }, form: FormData): Promise<{ error?: string }> {
   const name = String(form.get("name") ?? "").trim().slice(0, 40);
   const passcode = String(form.get("passcode") ?? "");
-  const next = String(form.get("next") ?? "/");
+  const next = String(form.get("next") ?? "/desk");
 
   if (!name) return { error: "Please add your name." };
   if (!passcodeMatches(passcode)) return { error: "That passcode doesn't match." };
@@ -20,7 +20,7 @@ export async function login(_: { error?: string }, form: FormData): Promise<{ er
     maxAge: SESSION_DAYS * 86_400,
   });
   // Only same-site paths, never "//evil.com".
-  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
+  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/desk");
 }
 
 export async function logout() {

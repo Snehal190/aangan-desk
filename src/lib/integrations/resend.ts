@@ -11,7 +11,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&
 export async function sendHandoffEmail(lead: Lead, designer: Designer) {
   if (!env.resend.apiKey) throw new NotConfiguredError("Resend");
   const b = lead.booking!;
-  const url = `${env.appUrl}/leads/${lead.id}`;
+  const url = `${env.appUrl}/desk/leads/${lead.id}`;
   const decision = agentDecision(lead);
 
   const html = `

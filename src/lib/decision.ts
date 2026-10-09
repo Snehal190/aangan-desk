@@ -29,7 +29,9 @@ export function agentDecision(lead: Lead): { title: string; body: string } {
       if (b && designer) {
         return {
           title: "Qualified · slot agreed, not yet on calendar",
-          body: `${why} ${name} agreed to ${when(b.start)} (${MODE_LABEL[b.mode].toLowerCase()}) with ${designer.name}. Cal.com isn't connected yet, so please block this on the calendar and confirm with the caller.`,
+          body: `${why} ${name} agreed to ${when(b.start)} (${MODE_LABEL[b.mode].toLowerCase()}) with ${designer.name}.${
+            b.emailSentAt ? ` The full report has been emailed to ${designer.name}.` : ""
+          } Cal.com isn't connected yet, so please block this on the calendar and confirm with the caller.`,
         };
       }
       return {

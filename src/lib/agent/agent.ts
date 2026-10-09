@@ -10,6 +10,9 @@ import type { TranscriptTurn } from "../types";
 export const GREETING =
   "Hello, you've reached Aangan Studio. I'm the studio's virtual assistant — how can I help you today?";
 
+export const webGreeting = (name?: string) =>
+  `Hi${name ? ` ${name.split(" ")[0]}` : ""}, thanks for reaching out to Aangan Studio! I'm the studio's virtual assistant. Tell me a little about your space — what are you hoping to do?`;
+
 const END = "[END]";
 
 /** Consultation slots the agent may offer: next working days (Mon–Sat), 11 am and 4 pm IST.
@@ -29,10 +32,17 @@ export function openSlots(from = new Date(), count = 6): string[] {
 export const slotLabel = (iso: string) =>
   formatIST(iso, { weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" });
 
-async function systemPrompt(slots: string[]) {
+/** One prompt for both the Vaani voice agent and the text test agent. */
+export async function systemPrompt(slots: string[], opts: { channel: "vaani" | "text"; callerName?: string } = { channel: "text" }) {
   const k = await loadKnowledge();
   const designer = DESIGNERS[0];
-  return `You are the virtual assistant answering the phone for Aangan Studio, an interior design studio in Pune. You are on a live voice call.
+  const ending =
+    opts.channel === "text"
+      ? `say a short goodbye and put ${END} at the very end of that reply.`
+      : "say a short, warm goodbye and end the call.";
+  return `You are the virtual assistant for Aangan Studio, an interior design studio in Pune. A visitor tapped "Enquire" on the studio website and you are now on a live voice call with them.${
+    opts.callerName ? ` They gave their name as ${opts.callerName}; their mobile number is already with the studio, so don't ask for it.` : ""
+  }
 
 HOW TO SPEAK
 - Warm, calm, like a good front-desk person in Pune. 1–3 short sentences per turn. One question at a time.
@@ -44,7 +54,7 @@ WHAT TO FIND OUT (Nikhil's rubric, qualified.md)
 1. Real project with execution (not advice only)  2. Site in Pune city or PCMC  3. Realistic timeline
 4. Budget — never ask; only react if the caller volunteers a number clearly too low for the scope
 5. Decision-maker — ask lightly once; do not push.
-Also learn: what kind of space, rough size, rooms, current state, and the caller's name.
+Also learn: what kind of space, rough size, rooms, current state${opts.callerName ? "" : ", and the caller's name"}.
 If 1, 2 or 3 is unclear, ask one direct question. Do not interrogate — gather what you can naturally.
 
 PRICING
@@ -54,7 +64,7 @@ OUTCOMES
 - Qualified: tell them it sounds like a great fit. Offer two of the open slots below and ask whether they'd prefer a site visit, the studio, or a video call. When they choose, confirm in one sentence: "Done — I've booked you with our designer ${designer.name} on <day, date, time>." Get their name first if you don't have it. Only ever offer slots from the list.
 - Not a fit (outside area, out of scope, advice-only, impossible timeline, budget clearly too low, or two criteria fail): explain honestly and kindly, as qualified.md suggests, and do not book.
 - Existing client with a complaint: apologise, take their name, project and designer, promise a senior callback within 15 minutes. Do not qualify them.
-- When the conversation is finished (booked, declined, or the caller is done), say a short goodbye and put ${END} at the very end of that reply.
+- When the conversation is finished (booked, declined, or the caller is done), ${ending}
 
 OPEN SLOTS (designer: ${designer.name})
 ${slots.map((s) => `- ${slotLabel(s)}`).join("\n")}
@@ -75,7 +85,7 @@ export async function agentReply(transcript: TranscriptTurn[], slots: string[]) 
     ...transcript.map((t) => ({ role: t.speaker === "agent" ? "model" : "user", parts: [{ text: t.text }] })),
   ];
   const raw = await geminiGenerate({
-    systemInstruction: { parts: [{ text: await systemPrompt(slots) }] },
+    systemInstruction: { parts: [{ text: await systemPrompt(slots, { channel: "text" }) }] },
     contents,
     generationConfig: { temperature: 0.4 },
   });

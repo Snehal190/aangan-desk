@@ -12,7 +12,7 @@ import { CRITERIA, CRITERIA_ORDER, STATUS_META } from "@/lib/rubric";
 import { getLead } from "@/lib/store";
 import type { Lead } from "@/lib/types";
 
-export async function generateMetadata({ params }: PageProps<"/leads/[id]">) {
+export async function generateMetadata({ params }: PageProps<"/desk/leads/[id]">) {
   await requireSession();
   const lead = await getLead((await params).id);
   return { title: lead ? `${lead.callerName} · Aangan Desk` : "Not found" };
@@ -25,7 +25,7 @@ const DECISION_TONE: Record<Lead["status"], { box: string; label: string }> = {
   escalation: { box: "bg-ink text-cream", label: "text-coral" },
 };
 
-export default async function LeadReport({ params }: PageProps<"/leads/[id]">) {
+export default async function LeadReport({ params }: PageProps<"/desk/leads/[id]">) {
   await requireSession();
   const lead = await getLead((await params).id);
   if (!lead) notFound();
@@ -39,7 +39,7 @@ export default async function LeadReport({ params }: PageProps<"/leads/[id]">) {
     <article className="space-y-10">
       <LiveRefresh seconds={30} />
       <Reveal>
-        <Link href="/" className="text-sm text-muted transition-colors duration-500 hover:text-ink">
+        <Link href="/desk" className="text-sm text-muted transition-colors duration-500 hover:text-ink">
           ← All calls
         </Link>
         <div className="mt-6 flex flex-wrap items-center gap-2">

@@ -19,7 +19,14 @@ await sql`
     data        jsonb not null
   )`;
 await sql`create index if not exists leads_received_at on leads (received_at desc)`;
-console.log("leads table ready");
+await sql`
+  create table if not exists enquiries (
+    id         text primary key,
+    room_name  text unique,
+    created_at timestamptz not null,
+    data       jsonb not null
+  )`;
+console.log("leads + enquiries tables ready");
 
 if (process.argv.includes("--seed")) {
   for (const l of SEED_LEADS) {

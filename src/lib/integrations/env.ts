@@ -11,7 +11,9 @@ export const env = {
   },
   vaani: {
     apiKey: process.env.VAANI_API_KEY,
+    agentId: process.env.VAANI_AGENT_ID,
     webhookSecret: process.env.VAANI_WEBHOOK_SECRET,
+    voiceGender: process.env.VAANI_VOICE_GENDER === "male" ? "male" : "female",
   },
   gemini: {
     apiKeys: list(process.env.GEMINI_API_KEYS ?? process.env.GEMINI_API_KEY),
@@ -34,7 +36,7 @@ export const env = {
 
 export const INTEGRATIONS = [
   { key: "neon", name: "Neon", role: "Database for calls and reports", configured: () => !!env.databaseUrl, vars: ["DATABASE_URL"] },
-  { key: "vaani", name: "Vaani Labs", role: "Answers the phone, streams the transcript", configured: () => !!env.vaani.apiKey && !!env.vaani.webhookSecret, vars: ["VAANI_API_KEY", "VAANI_WEBHOOK_SECRET"] },
+  { key: "vaani", name: "Vaani AI", role: "Voice agent for website enquiries (WebRTC) + post-call transcript", configured: () => !!env.vaani.apiKey && !!env.vaani.agentId, vars: ["VAANI_API_KEY", "VAANI_AGENT_ID", "VAANI_WEBHOOK_SECRET"] },
   { key: "gemini", name: "Gemini", role: `Rubric scoring and handoff note · ${env.gemini.apiKeys.length} key(s) in rotation`, configured: () => env.gemini.apiKeys.length > 0, vars: ["GEMINI_API_KEYS", "GEMINI_MODEL"] },
   { key: "cal", name: "Cal.com", role: "Books the designer's slot", configured: () => !!env.cal.apiKey, vars: ["CAL_API_KEY", "CAL_EVENT_SLUG"] },
   { key: "resend", name: "Resend", role: "Emails the report to the designer", configured: () => !!env.resend.apiKey, vars: ["RESEND_API_KEY", "RESEND_FROM"] },

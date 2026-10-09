@@ -15,7 +15,7 @@ export default async function Login({ searchParams }: PageProps<"/login">) {
       <p className="mx-auto mt-4 max-w-[500px] text-lg text-muted">
         Call reports for the front desk and designers. Ask the studio for the team passcode.
       </p>
-      <LoginForm next={typeof raw === "string" ? raw : "/"} />
+      <LoginForm next={typeof raw === "string" ? raw : "/desk"} />
     </div>
   );
 }
