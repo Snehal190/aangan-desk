@@ -4,7 +4,9 @@ import Link from "next/link";
 import { Reveal } from "@/components/reveal";
 import { Flag } from "@/components/pills";
 import { DESIGNERS, getDesigner } from "@/lib/designers";
-import { dayLabel, MODE_LABEL, timeOnly } from "@/lib/format";
+import { dayLabel, formatIST, MODE_LABEL, timeOnly } from "@/lib/format";
+
+const dayAnchor = (label: string) => `day-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 import { listLeads } from "@/lib/store";
 import type { Lead } from "@/lib/types";
 
@@ -24,6 +26,21 @@ export default async function DesignerView({ searchParams }: PageProps<"/desk/de
     const k = dayLabel(l.booking!.start);
     byDay.set(k, [...(byDay.get(k) ?? []), l]);
   }
+
+  // Next 7 days at a glance: Today, Tomorrow, Day after, then weekday names (IST).
+  const ymd = (d: Date) => formatIST(d.toISOString(), { year: "numeric", month: "2-digit", day: "2-digit" });
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(Date.parse(now) + i * 86_400_000);
+    const key = ymd(d);
+    const calls = upcoming.filter((l) => ymd(new Date(l.booking!.start)) === key);
+    const label = ["Today", "Tomorrow", "Day after"][i] ?? formatIST(d.toISOString(), { weekday: "short" });
+    return {
+      label,
+      date: formatIST(d.toISOString(), { day: "numeric", month: "short" }),
+      count: calls.length,
+      anchor: calls[0] ? dayAnchor(dayLabel(calls[0].booking!.start)) : undefined,
+    };
+  });
 
   return (
     <div className="space-y-12">
@@ -53,9 +70,39 @@ export default async function DesignerView({ searchParams }: PageProps<"/desk/de
         </div>
       </Reveal>
 
+      <Reveal>
+        <h2 className="px-1 text-2xl font-medium tracking-tight">
+          Your <span className="font-hand text-4xl font-normal text-coral-deep">week</span>
+        </h2>
+        <div className="no-scrollbar -mx-4 mt-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-7 sm:px-0">
+          {week.map((d) => {
+            const body = (
+              <>
+                <span className="text-sm text-stone-400">{d.date}</span>
+                <span className="text-lg font-medium tracking-tight">{d.label}</span>
+                <span className={`mt-2 text-3xl font-medium tracking-tight ${d.count ? "text-ink" : "text-stone-300"}`}>{d.count}</span>
+                <span className="text-xs text-muted">{d.count === 1 ? "call" : "calls"}</span>
+              </>
+            );
+            const cls = `flex w-28 shrink-0 flex-col rounded-3xl p-4 shadow-soft sm:w-auto ${d.count ? "bg-sage" : "bg-white"}`;
+            return d.anchor ? (
+              <a key={d.label} href={`#${d.anchor}`} className={`${cls} transition-transform duration-500 hover:-translate-y-0.5`}>
+                {body}
+              </a>
+            ) : (
+              <div key={d.label} className={cls}>
+                {body}
+              </div>
+            );
+          })}
+        </div>
+      </Reveal>
+
       {[...byDay.entries()].map(([day, leads]) => (
         <Reveal key={day}>
-          <h2 className="px-1 text-sm font-medium text-muted">{day}</h2>
+          <h2 id={dayAnchor(day)} className="scroll-mt-28 px-1 text-sm font-medium text-muted">
+            {day}
+          </h2>
           <div className="mt-3 space-y-4">
             {leads.map((l) => (
               <BookingCard key={l.id} lead={l} />

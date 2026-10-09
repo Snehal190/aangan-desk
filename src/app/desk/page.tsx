@@ -1,7 +1,10 @@
 import { requireSession } from "@/lib/session";
 import Link from "next/link";
 import { LeadRow } from "@/components/lead-row";
+import { after } from "next/server";
 import { LiveRefresh } from "@/components/live-refresh";
+import { retryStuckEnquiries } from "@/lib/pipeline/enquiry";
+import { retryEnquiry } from "./actions";
 import { agentDecision, needsAttention } from "@/lib/decision";
 import { Reveal } from "@/components/reveal";
 import { when } from "@/lib/format";
@@ -38,6 +41,8 @@ export default async function Inbox({ searchParams }: PageProps<"/desk">) {
   const filter = typeof raw === "string" && FILTERS.some((f) => f.key === raw) ? raw : "all";
 
   const [all, stats, inFlight] = await Promise.all([listLeads(), getStats(), listOpenEnquiries()]);
+  // Vaani's webhook can't reach a laptop, so the dashboard also picks up late transcripts.
+  if (inFlight.some((e) => e.status === "failed")) after(() => retryStuckEnquiries());
   const attention = all.filter(needsAttention);
   const shown =
     filter === "all" ? all : filter === "attention" ? attention : all.filter((l) => l.status === filter);
@@ -112,7 +117,14 @@ export default async function Inbox({ searchParams }: PageProps<"/desk">) {
                     <p className="text-sm text-muted">
                       {label} · started {when(e.startedAt)}
                     </p>
-                    {e.status === "failed" && e.error && <p className="mt-1 text-xs text-stone-400">{e.error}</p>}
+                    {e.status === "failed" && (
+                      <form action={retryEnquiry} className="mt-2">
+                        <input type="hidden" name="id" value={e.id} />
+                        <button className="rounded-full border border-stone-200 px-3 py-1 text-xs font-medium text-muted hover:text-ink">
+                          Fetch transcript again
+                        </button>
+                      </form>
+                    )}
                   </div>
                 </div>
               );

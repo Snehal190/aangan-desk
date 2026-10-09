@@ -1,19 +1,28 @@
 import { openSlots } from "../agent/agent";
 import { fetchTranscript, parseTranscript } from "../integrations/vaani";
-import { claimEnquiry, getEnquiry, saveEnquiry, saveLead } from "../store";
+import { claimEnquiry, getEnquiry, listOpenEnquiries, saveEnquiry, saveLead } from "../store";
 import type { Enquiry, Lead } from "../types";
 import { processCall } from "./process-call";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Vaani finishes transcription a little after hang-up; poll for ~45 s. */
+/** Vaani can take a minute or two to finish the transcript; poll for ~2.5 min.
+ *  If it's still not there, the dashboard retries later (retryStuckEnquiries). */
 async function waitForTranscript(roomName: string) {
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 21; i++) {
     const t = await fetchTranscript(roomName).catch(() => null);
     if (t) return t;
-    await sleep(5000);
+    await sleep(i < 12 ? 5000 : 10000);
   }
   return null;
+}
+
+/** Re-try enquiries whose transcript wasn't ready (no webhook reaches localhost). */
+export async function retryStuckEnquiries() {
+  const open = await listOpenEnquiries();
+  const stuck = open.filter((e) => e.status === "failed" || (e.status === "live" && e.endedAt));
+  await Promise.all(stuck.map((e) => finishEnquiry(e.id)));
+  return stuck.length;
 }
 
 /** A lead the front desk must call back — used when the call never really happened. */
@@ -53,7 +62,13 @@ export async function finishEnquiry(enquiryId: string, given?: { transcript?: st
   try {
     const raw = given?.transcript ?? (e.roomName ? await waitForTranscript(e.roomName) : null);
     if (!raw) {
-      // Leave it re-claimable: the webhook may still bring the transcript.
+      // Give up after 30 min: the call most likely never really connected.
+      if (Date.now() - Date.parse(e.startedAt) > 30 * 60_000) {
+        const lead = await callbackLead({ ...e, endedAt }, "no transcript was recorded");
+        await saveEnquiry({ ...e, endedAt, status: "done", leadId: lead.id });
+        return;
+      }
+      // Leave it re-claimable: the webhook or the dashboard retry may still get it.
       await saveEnquiry({ ...e, endedAt, status: "failed", error: "Transcript not ready yet — waiting for Vaani" });
       return;
     }

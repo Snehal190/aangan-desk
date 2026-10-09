@@ -17,7 +17,14 @@ function limited(ip: string) {
 
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as { name?: unknown } | null;
-  const name = typeof body?.name === "string" ? body.name.trim().replace(/\s+/g, " ").slice(0, 60) : "";
+  const name =
+    typeof body?.name === "string"
+      ? body.name
+          .trim()
+          .replace(/\s+/g, " ")
+          .slice(0, 60)
+          .replace(/(^|[\s'-])(\p{Ll})/gu, (_, sep: string, ch: string) => sep + ch.toUpperCase())
+      : "";
   if (name.length < 2) return Response.json({ error: "Please tell us your name." }, { status: 400 });
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
