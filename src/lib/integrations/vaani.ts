@@ -36,7 +36,7 @@ export async function startWebCall(args: {
       metadata: { enquiry_id: args.enquiryId, caller_name: args.callerName },
       modify_agent: {
         persona: { identity: { system_prompt: args.systemPrompt } },
-        experience: { settings: { call_settings: { max_call_duration: 12 } } },
+        experience: { settings: { call_settings: { max_call_duration: 12, max_duration_enabled: true } } },
       },
     }),
   });

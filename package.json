@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:setup": "node --env-file=.env.local scripts/db-setup.ts"
+    "db:setup": "tsx --env-file=.env.local scripts/db-setup.mts",
+    "vaani:sync": "tsx --env-file=.env.local scripts/vaani-agent.mts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
@@ -24,6 +25,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

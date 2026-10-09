@@ -38,6 +38,19 @@ create the table (drop `--seed` to start empty). Sign in with `TEAM_PASSCODE`.
 4. In Vaani → Settings → Webhooks, add
    `<APP_URL>/api/webhooks/vaani?key=<VAANI_WEBHOOK_SECRET>`.
 
+## Vaani AI agent
+
+The agent lives in Vaani AI as **Aangan Enquiry Agent** and is created/updated
+from this repo — prompt, greeting, end-call phrase, idle and duration limits:
+
+```bash
+npm run vaani:sync
+```
+
+Run it again after editing anything in `knowledge/`. Every call also sends the
+latest prompt and that day's open slots, so the dashboard copy is a fallback.
+Voice, Cal.com and language can be changed in the Vaani dashboard.
+
 ## Where things live
 
 | Path | What |
@@ -63,5 +76,4 @@ create the table (drop `--seed` to start empty). Sign in with `TEAM_PASSCODE`.
 
 - Neon `DATABASE_URL`
 - Cal.com API key, username and event slug
-- A working Vaani AI API key and the agent ID (Agent Config → Agent ID)
 - HubSpot private app token, pipeline and stage IDs

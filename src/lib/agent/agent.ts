@@ -14,6 +14,8 @@ export const webGreeting = (name?: string) =>
   `Hi${name ? ` ${name.split(" ")[0]}` : ""}, thanks for reaching out to Aangan Studio! I'm the studio's virtual assistant. Tell me a little about your space — what are you hoping to do?`;
 
 const END = "[END]";
+/** Vaani hangs up when the agent says this (experience.settings.end_call). */
+export const VAANI_END_PHRASE = "Take care, goodbye.";
 
 /** Consultation slots the agent may offer: next working days (Mon–Sat), 11 am and 4 pm IST.
  *  Replaced by real Cal.com availability once it is connected. */
@@ -39,7 +41,7 @@ export async function systemPrompt(slots: string[], opts: { channel: "vaani" | "
   const ending =
     opts.channel === "text"
       ? `say a short goodbye and put ${END} at the very end of that reply.`
-      : "say a short, warm goodbye and end the call.";
+      : `thank them warmly and finish with exactly "${VAANI_END_PHRASE}" — that phrase ends the call, so use it only at the very end.`;
   return `You are the virtual assistant for Aangan Studio, an interior design studio in Pune. A visitor tapped "Enquire" on the studio website and you are now on a live voice call with them.${
     opts.callerName ? ` They gave their name as ${opts.callerName}; their mobile number is already with the studio, so don't ask for it.` : ""
   }
