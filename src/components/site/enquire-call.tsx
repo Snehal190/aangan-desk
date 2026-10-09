@@ -31,6 +31,7 @@ export function EnquireCall() {
   const enquiryId = useRef("");
   const audioBox = useRef<HTMLDivElement>(null);
   const ended = useRef(false);
+  const streaming = useRef("");
 
   useEffect(() => {
     if (phase !== "live") return;
@@ -108,14 +109,54 @@ export function EnquireCall() {
       return;
     }
 
-    const r = new Room({ adaptiveStream: true });
+    // Mirrors Vaani's own web client (livekit-client 2.17.2, adaptiveStream +
+    // dynacast, mic enabled once the room reports Connected).
+    const r = new Room({ adaptiveStream: true, dynacast: true });
     room.current = r;
+    r.on(RoomEvent.Connected, async () => {
+      setPhase("live");
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          await r.localParticipant.setMicrophoneEnabled(true);
+          return;
+        } catch (err) {
+          console.warn("Mic publish failed, retrying", err);
+        }
+      }
+      setError("Your microphone couldn't connect to the call. Please end the call and try again.");
+    });
     r.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => {
       if (track.kind === Track.Kind.Audio) audioBox.current?.appendChild(track.attach());
+      r.startAudio().catch(() => {});
     });
     r.on(RoomEvent.TranscriptionReceived, (segments: TranscriptionSegment[], p?: Participant) => {
       const who = p?.identity === r.localParticipant.identity ? "you" : "agent";
       for (const s of segments) if (s.text.trim()) upsertLine({ id: s.id, who, text: s.text });
+    });
+    // Vaani streams captions as JSON data messages.
+    r.on(RoomEvent.DataReceived, (payload: Uint8Array) => {
+      try {
+        const m = JSON.parse(new TextDecoder().decode(payload)) as { type?: string; text?: string; content?: string };
+        const text = (m.text ?? m.content ?? "").trim();
+        if (m.type === "stt_transcript" || m.type === "stt_final") {
+          if (text) upsertLine({ id: `u-${Date.now()}`, who: "you", text });
+        } else if (m.type === "tts_transcript" || m.type === "text") {
+          streaming.current = "";
+          if (text) upsertLine({ id: `a-${Date.now()}`, who: "agent", text });
+        } else if (m.type === "text_chunk") {
+          const chunk = m.content ?? m.text ?? "";
+          if (!streaming.current) streaming.current = `a-${Date.now()}`;
+          const id = streaming.current;
+          setLines((prev) => {
+            const last = prev.find((l) => l.id === id);
+            return last ? prev.map((l) => (l.id === id ? { ...l, text: l.text + chunk } : l)) : [...prev, { id, who: "agent" as const, text: chunk }].slice(-8);
+          });
+        } else if (m.type === "text_complete") {
+          streaming.current = "";
+        }
+      } catch {
+        // not a caption message
+      }
     });
     r.on(RoomEvent.ActiveSpeakersChanged, (speakers: Participant[]) => {
       setAgentTalking(speakers.some((s) => s.identity !== r.localParticipant.identity));
@@ -124,10 +165,8 @@ export function EnquireCall() {
 
     try {
       await r.connect(data.connectionUrl, data.token);
-      await r.localParticipant.setMicrophoneEnabled(true);
-      await r.startAudio();
-      setPhase("live");
-    } catch {
+    } catch (err) {
+      console.warn("Vaani connect failed", err);
       await finish();
       setError("We couldn't connect the call. Please check your connection and try again.");
       setPhase("form");
