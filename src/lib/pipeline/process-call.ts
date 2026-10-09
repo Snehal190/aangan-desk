@@ -29,7 +29,7 @@ const validEmail = (e?: string) => {
 export async function processCall(
   call: CallInput & { booking?: Booking; offeredSlots?: string[]; flags?: string[]; callerName?: string },
 ) {
-  const { bookedSlot, bookingMode, language, callerEmail, emailConfirmed, ...analysis } = await analyseCall(call.transcript, {
+  const { bookedSlot, bookingMode, language, callerEmail, emailConfirmed, emailOwner, ...analysis } = await analyseCall(call.transcript, {
     offeredSlots: call.offeredSlots,
   });
 
@@ -48,6 +48,7 @@ export async function processCall(
     phone: call.from || undefined,
     email: validEmail(callerEmail),
     emailConfirmed: !!emailConfirmed && !!validEmail(callerEmail),
+    emailOwner: validEmail(callerEmail) ? emailOwner || undefined : undefined,
     language: language || call.language,
     receivedAt: call.startedAt,
     durationSec: call.durationSec,

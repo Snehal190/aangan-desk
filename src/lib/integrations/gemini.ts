@@ -23,6 +23,7 @@ export interface CallAnalysis {
   language?: string;
   callerEmail?: string;
   emailConfirmed?: boolean;
+  emailOwner?: string;
   bookedSlot?: string;
   bookingMode?: "site_visit" | "studio" | "video";
 }
@@ -80,6 +81,10 @@ const RESPONSE_SCHEMA = {
       description: "The caller's email as finally confirmed on the call, written normally (e.g. 'snehal.k@gmail.com' from 'snehal dot k at gmail dot com'). Omit if none was given.",
     },
     emailConfirmed: { type: "BOOLEAN", description: "True only if the caller confirmed the email when the agent read it back." },
+    emailOwner: {
+      type: "STRING",
+      description: "Whose email it is if not the caller's own, e.g. 'Father (decision-maker)'. Omit when it is the caller's own email.",
+    },
     language: { type: "STRING", description: "Language(s) the caller used, e.g. 'English', 'Hinglish'" },
     bookedSlot: { type: "STRING", description: "ISO start of the consultation slot the caller accepted, copied exactly from the offered list. Omit if none was agreed." },
     bookingMode: { type: "STRING", enum: ["site_visit", "studio", "video"] },
@@ -136,6 +141,7 @@ export async function analyseCall(
     "- escalation: existing client or complaint, not a new enquiry.",
     "Verdict guidance: timeline passes unless they need it done in under ~6 weeks ('no rush', 'six months', 'by March' all pass). budget passes when not mentioned. decision_maker passes for owners/joint owners/authorised callers, unclear if never asked.",
     "If the agent itself told the caller they are a great fit and booked a slot, and the facts support it, the status must be qualified.",
+    "If someone else decides (parents, spouse, owner) the lead is still qualified when the other criteria pass: decision_maker = unclear, and the handoff note must say the consultation is with that decision-maker (name/relation and whose email was given).",
     "Emails: callers say 'at the rate' / 'at' for @ and 'dot' for '.'; spelled letters are joined without spaces. Use the version the caller finally confirmed. Lowercase it.",
     "The handoff note is for the designer: 3–5 sentences, plain English, so they never re-ask what was answered.",
     "evidenceTurn is the 0-based index of the transcript line that proves the verdict.",

@@ -15,14 +15,14 @@ export function agentDecision(lead: Lead): { title: string; body: string } {
       const passed = lead.criteria.filter((c) => c.verdict === "pass").length;
       const why = `${name} qualified — ${passed} of 5 checks passed${
         unclear.length ? `, ${unclear.map((c) => CRITERIA[c.key].label.toLowerCase()).join(" and ")} noted as unclear` : ""
-      }.`;
+      }.${lead.emailOwner ? ` The consultation is with ${lead.emailOwner}, not the caller.` : ""}`;
       const b = lead.booking;
       const designer = getDesigner(b?.designerId);
       if (b && designer && b.status === "confirmed") {
         return {
           title: "Qualified · designer's calendar blocked",
           body: `${why} So I blocked ${designer.name}'s calendar: ${when(b.start)}, ${MODE_LABEL[b.mode].toLowerCase()}.${
-            lead.email && lead.emailConfirmed ? ` The invite went to ${lead.email}.` : ""
+            lead.email && lead.emailConfirmed ? ` The invite went to ${lead.email}${lead.emailOwner ? ` (${lead.emailOwner})` : ""}.` : ""
           }${b.emailSentAt ? ` The full report has been emailed to ${designer.name}.` : ""}`,
         };
       }
@@ -42,8 +42,8 @@ export function agentDecision(lead: Lead): { title: string; body: string } {
     case "not_fit":
       return {
         title: "Disqualified",
-        body: `${name} did not qualify: ${fails.map((c) => c.reason).join(" ") || lead.handoffNote} I explained this politely on the call and did not block any calendar.${
-          lead.email ? ` Their email is ${lead.email} if things change.` : ""
+        body: `${name} did not qualify: ${fails.map((c) => c.reason).join(" ") || lead.handoffNote} I explained this politely, did not block any calendar, and said the team would check and get back.${
+          lead.email ? ` Reply to them at ${lead.email}.` : " No email was given."
         }`,
       };
     case "needs_review":

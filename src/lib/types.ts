@@ -75,6 +75,8 @@ export interface Lead {
   /** Spoken by the caller and read back by the agent to confirm. */
   email?: string;
   emailConfirmed?: boolean;
+  /** Set when the email belongs to someone else, e.g. "Father (decision-maker)". */
+  emailOwner?: string;
   /** Only for phone calls; website calls have none. */
   phone?: string;
   language: string;

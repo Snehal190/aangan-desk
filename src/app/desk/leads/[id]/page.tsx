@@ -59,6 +59,7 @@ export default async function LeadReport({ params }: PageProps<"/desk/leads/[id]
           {lead.email && (
             <a href={`mailto:${lead.email}`} className="text-ink underline decoration-stone-300 underline-offset-4">
               {lead.email}
+              {lead.emailOwner ? ` · ${lead.emailOwner}` : ""}
               {lead.emailConfirmed ? " ✓ confirmed" : " (not confirmed)"}
             </a>
           )}
