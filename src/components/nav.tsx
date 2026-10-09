@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/", label: "Inbox" },
   { href: "/designer", label: "My calls" },
+  { href: "/test-call", label: "Test call" },
   { href: "/setup", label: "Setup", desktopOnly: true },
 ];
 
@@ -27,7 +28,7 @@ export function Nav({ attention }: { attention: number }) {
             <Link
               key={l.href}
               href={l.href}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors duration-500 ${
+              className={`shrink-0 rounded-full px-2.5 py-1.5 text-sm sm:px-3 font-medium transition-colors duration-500 ${
                 l.desktopOnly ? "hidden sm:block" : ""
               } ${active(l.href) ? "bg-stone-100 text-ink" : "text-muted hover:text-ink"}`}
             >
@@ -37,9 +38,10 @@ export function Nav({ attention }: { attention: number }) {
         </div>
         <Link
           href="/?status=attention"
-          className="flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-medium text-cream transition-transform duration-500 hover:scale-[1.03]"
+          aria-label={`Needs you: ${attention}`}
+          className="flex items-center gap-2 rounded-full bg-ink px-3 py-2 sm:px-4 text-sm font-medium text-cream transition-transform duration-500 hover:scale-[1.03]"
         >
-          Needs you
+          <span className="hidden sm:inline">Needs you</span>
           <span className="grid min-w-5 place-items-center rounded-full bg-coral px-1.5 text-xs text-ink">{attention}</span>
         </Link>
       </nav>

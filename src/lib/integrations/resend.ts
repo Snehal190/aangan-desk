@@ -1,3 +1,4 @@
+import { agentDecision } from "../decision";
 import { CRITERIA } from "../rubric";
 import { MODE_LABEL, when } from "../format";
 import type { Designer, Lead } from "../types";
@@ -11,11 +12,17 @@ export async function sendHandoffEmail(lead: Lead, designer: Designer) {
   if (!env.resend.apiKey) throw new NotConfiguredError("Resend");
   const b = lead.booking!;
   const url = `${env.appUrl}/leads/${lead.id}`;
+  const decision = agentDecision(lead);
 
   const html = `
   <div style="font-family:Helvetica,Arial,sans-serif;color:#292524;max-width:560px">
     <p>Hi ${esc(designer.name)},</p>
-    <p>A consultation is on your calendar: <b>${esc(when(b.start))}</b> · ${MODE_LABEL[b.mode]} · ${b.durationMin} min.</p>
+    <p>${
+      b.status === "confirmed"
+        ? "A consultation is on your calendar:"
+        : "The caller agreed this slot on the call. It is <b>not on your calendar yet</b> (Cal.com isn't connected) — please block it:"
+    } <b>${esc(when(b.start))}</b> · ${MODE_LABEL[b.mode]} · ${b.durationMin} min.</p>
+    <p style="background:#E8EFE8;padding:12px 16px;border-radius:12px"><b>${esc(decision.title)}</b><br>${esc(decision.body)}</p>
     <h3 style="margin-bottom:4px">${esc(lead.callerName)} — ${esc(lead.headline)}</h3>
     <p>${esc(lead.handoffNote)}</p>
     <p><b>Already answered on the call — please don't re-ask:</b></p>
@@ -32,7 +39,7 @@ export async function sendHandoffEmail(lead: Lead, designer: Designer) {
     body: JSON.stringify({
       from: env.resend.from,
       to: designer.email,
-      subject: `New consultation · ${lead.callerName} · ${when(b.start)}`,
+      subject: `${b.status === "confirmed" ? "New consultation" : "Slot to confirm"} · ${lead.callerName} · ${when(b.start)}`,
       html,
     }),
   });

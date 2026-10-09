@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 // dynamic-rendering model rather than Cache Components.
 const nextConfig: NextConfig = {
   // The agent reads /knowledge at runtime; make sure Vercel ships it.
-  outputFileTracingIncludes: { "/api/webhooks/vaani": ["./knowledge/**/*"] },
+  outputFileTracingIncludes: { "/api/**/*": ["./knowledge/**/*"] },
   turbopack: {
     rules: {
       "*.css": {

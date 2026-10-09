@@ -1,6 +1,8 @@
 import { requireSession } from "@/lib/session";
 import Link from "next/link";
 import { LeadRow } from "@/components/lead-row";
+import { LiveRefresh } from "@/components/live-refresh";
+import { agentDecision, needsAttention } from "@/lib/decision";
 import { Reveal } from "@/components/reveal";
 import { when } from "@/lib/format";
 import { STATUS_META } from "@/lib/rubric";
@@ -23,7 +25,7 @@ const GROUPS: { status: LeadStatus; title: string; hint: string; dot: string; so
   {
     status: "qualified",
     title: "Qualified",
-    hint: "Designer call booked · highest priority first",
+    hint: "Passed the rubric · highest priority first",
     dot: "bg-sage-deep",
     sort: (a, b) => RANK[a.priority ?? "low"] - RANK[b.priority ?? "low"] || newest(a, b),
   },
@@ -36,12 +38,13 @@ export default async function Inbox({ searchParams }: PageProps<"/">) {
   const filter = typeof raw === "string" && FILTERS.some((f) => f.key === raw) ? raw : "all";
 
   const [all, stats] = await Promise.all([listLeads(), getStats()]);
-  const attention = all.filter((l) => l.status === "needs_review" || l.status === "escalation");
+  const attention = all.filter(needsAttention);
   const shown =
     filter === "all" ? all : filter === "attention" ? attention : all.filter((l) => l.status === filter);
 
   return (
     <div className="space-y-16">
+      <LiveRefresh />
       <Reveal className="pt-6 text-center">
         <h1 className="text-5xl leading-[1.05] font-medium tracking-tight sm:text-7xl">
           Every call,{" "}
@@ -72,7 +75,7 @@ export default async function Inbox({ searchParams }: PageProps<"/">) {
           {[
             { label: "Avg pickup", value: `${stats.avgPickupSec.toFixed(1)}s`, bg: "bg-white" },
             { label: "Qualified", value: `${stats.qualifiedPct}%`, bg: "bg-sage" },
-            { label: "Designer calls booked", value: stats.booked, bg: "bg-lavender" },
+            { label: "Consultations on calendar", value: stats.booked, bg: "bg-lavender" },
             { label: "After-hours calls", value: stats.afterHours, bg: "bg-blush" },
           ].map((s) => (
             <div key={s.label} className={`rounded-[2rem] p-5 shadow-soft ${s.bg}`}>
@@ -98,13 +101,13 @@ export default async function Inbox({ searchParams }: PageProps<"/">) {
                 <span className="flex items-center justify-between text-sm text-stone-400">
                   {when(l.receivedAt)}
                   <span
-                    className={`size-2 rounded-full ${l.status === "escalation" ? "bg-coral-deep" : "bg-lavender-deep"}`}
+                    className={`size-2 rounded-full ${l.status === "escalation" ? "bg-ink" : l.status === "qualified" ? "bg-sage-deep" : "bg-lavender-deep"}`}
                   />
                 </span>
                 <span>
                   <span className="block text-sm text-muted">{l.callerName}</span>
                   <span className="line-clamp-2 text-xl leading-snug text-stone-800 transition-colors duration-500 group-hover:text-coral-deep">
-                    {l.nextStep ?? l.headline}
+                    {l.status === "qualified" ? agentDecision(l).title : (l.nextStep ?? agentDecision(l).title)}
                   </span>
                 </span>
               </Link>

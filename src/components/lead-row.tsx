@@ -51,12 +51,20 @@ export function LeadRow({ lead }: { lead: Lead }) {
       </div>
       <p className="mt-1 text-[15px] text-muted">{lead.headline}</p>
       {reason && <p className={`mt-3 text-[15px] leading-snug ${REASON_TONE[lead.status]}`}>{reason}</p>}
-      {(lead.booking || lead.flags.length > 0) && (
+      {(lead.booking || lead.status === "qualified" || lead.flags.length > 0) && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {lead.booking && designer && (
-            <span className="rounded-full bg-sage px-2.5 py-0.5 text-xs text-sage-deep">
-              {designer.name} · {when(lead.booking.start)}
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs ${
+                lead.booking.status === "confirmed" ? "bg-sage text-sage-deep" : "bg-lavender text-lavender-deep"
+              }`}
+            >
+              {lead.booking.status === "confirmed" ? "Booked" : "Slot held, not on calendar"} · {designer.name} ·{" "}
+              {when(lead.booking.start)}
             </span>
+          )}
+          {lead.status === "qualified" && !lead.booking && (
+            <span className="rounded-full bg-blush px-2.5 py-0.5 text-xs text-coral-deep">Needs a booking</span>
           )}
           {lead.flags.map((f) => (
             <Flag key={f}>{f}</Flag>

@@ -20,6 +20,9 @@ export interface CallAnalysis {
   nextStep?: string;
   priority?: Priority;
   priorityReason?: string;
+  language?: string;
+  bookedSlot?: string;
+  bookingMode?: "site_visit" | "studio" | "video";
 }
 
 const verdict = { type: "STRING", enum: ["pass", "unclear", "fail"] };
@@ -63,9 +66,16 @@ const RESPONSE_SCHEMA = {
     handoffNote: { type: "STRING" },
     alreadyAnswered: strings,
     openQuestions: strings,
-    flags: strings,
+    flags: {
+      type: "ARRAY",
+      items: { type: "STRING" },
+      description: "0–3 short human tags in sentence case, e.g. 'Referral', 'After hours', 'Price-sensitive', 'Upset'. Don't repeat the status.",
+    },
     nextStep: { type: "STRING" },
     priority: { type: "STRING", enum: ["high", "medium", "low"] },
+    language: { type: "STRING", description: "Language(s) the caller used, e.g. 'English', 'Hinglish'" },
+    bookedSlot: { type: "STRING", description: "ISO start of the consultation slot the caller accepted, copied exactly from the offered list. Omit if none was agreed." },
+    bookingMode: { type: "STRING", enum: ["site_visit", "studio", "video"] },
     priorityReason: { type: "STRING" },
   },
   required: ["callerName", "status", "headline", "project", "criteria", "handoffNote", "alreadyAnswered", "openQuestions", "flags"],
@@ -103,7 +113,10 @@ export async function geminiGenerate(body: unknown): Promise<string> {
   throw new Error(`All Gemini keys busy or rejected (${failures.join(", ")})`);
 }
 
-export async function analyseCall(transcript: TranscriptTurn[]): Promise<CallAnalysis> {
+export async function analyseCall(
+  transcript: TranscriptTurn[],
+  opts: { offeredSlots?: string[] } = {},
+): Promise<CallAnalysis> {
   const k = await loadKnowledge();
 
   const system = [
@@ -113,6 +126,9 @@ export async function analyseCall(transcript: TranscriptTurn[]): Promise<CallAna
     "The handoff note is for the designer: 3–5 sentences, plain English, so they never re-ask what was answered.",
     "evidenceTurn is the 0-based index of the transcript line that proves the verdict.",
     "Priority (qualified leads only): high = large scope, referral or tight-but-feasible timeline; medium = standard full home or office; low = single room or loose interest. Give a one-line priorityReason.",
+    opts.offeredSlots?.length
+      ? `Slots the agent could offer (ISO): ${opts.offeredSlots.join(", ")}. If the caller accepted one, set bookedSlot to that exact value and bookingMode to what they chose (default studio).`
+      : "If a consultation time was agreed, set bookedSlot to its ISO start (Asia/Kolkata).",
     `\n## services.md\n${k.services}`,
     `\n## qualified.md (rubric)\n${k.qualified}`,
     `\n## pricing.md\n${k.pricing}`,

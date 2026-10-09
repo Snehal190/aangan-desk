@@ -55,7 +55,7 @@ export const SEED_LEADS: Lead[] = [
       "Their actual quote — they only heard the indicative standard range",
     ],
     flags: ["After hours"],
-    booking: { designerId: "snehal", start: "2026-10-10T11:00:00+05:30", durationMin: 60, mode: "site_visit", calBookingUid: "cal_8f2a1", emailSentAt: "2026-10-07T22:53:00+05:30" },
+    booking: { designerId: "snehal", start: "2026-10-10T11:00:00+05:30", durationMin: 60, mode: "site_visit", status: "confirmed", calBookingUid: "cal_8f2a1", emailSentAt: "2026-10-07T22:53:00+05:30" },
     transcript: [
       a("0:00", GREETING),
       c("0:06", "Hi, sorry for calling so late — I didn't think anyone would pick up. We just got possession of our flat and want to get the interiors done."),
@@ -108,7 +108,7 @@ export const SEED_LEADS: Lead[] = [
     alreadyAnswered: ["Referral source", "Location and carpet area", "Rooms in scope", "Timeline (March)", "Ownership and decision"],
     openQuestions: ["Style direction — any references from Shruti's flat they liked?", "Whether they will live in the flat during execution"],
     flags: ["Referral"],
-    booking: { designerId: "snehal", start: "2026-10-09T16:00:00+05:30", durationMin: 60, mode: "studio", calBookingUid: "cal_8f29c", emailSentAt: "2026-10-07T10:28:00+05:30" },
+    booking: { designerId: "snehal", start: "2026-10-09T16:00:00+05:30", durationMin: 60, mode: "studio", status: "confirmed", calBookingUid: "cal_8f29c", emailSentAt: "2026-10-07T10:28:00+05:30" },
     transcript: [
       a("0:00", GREETING),
       c("0:05", "Hi, I'm Priya. I got your number from a friend — Shruti Joshi. She had her flat done by you in Aundh."),
@@ -233,7 +233,7 @@ export const SEED_LEADS: Lead[] = [
     alreadyAnswered: ["Where he found us", "Location and size", "Scope", "Move-in month"],
     openQuestions: ["Pricing walkthrough — he'll lead with it", "Will they live on site during execution?"],
     flags: ["Price-sensitive"],
-    booking: { designerId: "snehal", start: "2026-10-09T12:00:00+05:30", durationMin: 60, mode: "video", calBookingUid: "cal_8f1d7", emailSentAt: "2026-10-06T14:47:00+05:30" },
+    booking: { designerId: "snehal", start: "2026-10-09T12:00:00+05:30", durationMin: 60, mode: "video", status: "confirmed", calBookingUid: "cal_8f1d7", emailSentAt: "2026-10-06T14:47:00+05:30" },
     transcript: [
       a("0:00", GREETING),
       c("0:05", "Hi. I was looking at your work on Instagram. I have a 2BHK in Wakad — can you tell me roughly how much something like that would cost?"),
@@ -321,7 +321,7 @@ export const SEED_LEADS: Lead[] = [
     alreadyAnswered: ["Referral", "Size and scope", "Site is vacant", "February deadline", "Wants site visit"],
     openQuestions: ["Flooring material preference", "Any rooms they want to keep as-is"],
     flags: ["Referral", "Nikhil's network", "High value"],
-    booking: { designerId: "snehal", start: "2026-10-12T10:30:00+05:30", durationMin: 90, mode: "site_visit", calBookingUid: "cal_8f0b2", emailSentAt: "2026-10-05T10:59:00+05:30" },
+    booking: { designerId: "snehal", start: "2026-10-12T10:30:00+05:30", durationMin: 90, mode: "site_visit", status: "confirmed", calBookingUid: "cal_8f0b2", emailSentAt: "2026-10-05T10:59:00+05:30" },
     transcript: [
       a("0:00", GREETING),
       c("0:05", "Hi, this is Aarti Mehta. Vikram Agarwal asked me to call — he's a close friend of Nikhil's."),
@@ -369,7 +369,7 @@ export const SEED_LEADS: Lead[] = [
     alreadyAnswered: ["Headcount and rooms", "Current state of the space", "December target", "Decision-maker"],
     openQuestions: ["Growth plans — design for 20 or more?", "Landlord fitout rules / building approvals"],
     flags: ["Commercial"],
-    booking: { designerId: "snehal", start: "2026-10-08T17:00:00+05:30", durationMin: 60, mode: "site_visit", calBookingUid: "cal_8f0a9", emailSentAt: "2026-10-05T15:33:00+05:30" },
+    booking: { designerId: "snehal", start: "2026-10-08T17:00:00+05:30", durationMin: 60, mode: "site_visit", status: "confirmed", calBookingUid: "cal_8f0a9", emailSentAt: "2026-10-05T15:33:00+05:30" },
     transcript: [
       a("0:00", GREETING),
       c("0:05", "Hi, I'm calling about a commercial project. We're a startup — just got our first proper office space in Baner. About 800 square feet. We need workstations for 20 people, a small cabin, a meeting room, and a break area."),
@@ -454,7 +454,7 @@ export const SEED_LEADS: Lead[] = [
     alreadyAnswered: ["Rental and lease length", "Landlord consent", "Rooms in scope", "No structural work"],
     openQuestions: ["What she'd want to take with her when the lease ends", "Timeline preference"],
     flags: ["Rented"],
-    booking: { designerId: "snehal", start: "2026-10-13T15:00:00+05:30", durationMin: 60, mode: "studio", calBookingUid: "cal_8ef77", emailSentAt: "2026-10-04T10:25:00+05:30" },
+    booking: { designerId: "snehal", start: "2026-10-13T15:00:00+05:30", durationMin: 60, mode: "studio", status: "confirmed", calBookingUid: "cal_8ef77", emailSentAt: "2026-10-04T10:25:00+05:30" },
     transcript: [
       a("0:00", GREETING),
       c("0:05", "Hi — quick question. I'm in a rented apartment. Can you still take up a project?"),
@@ -502,7 +502,7 @@ export const SEED_LEADS: Lead[] = [
     alreadyAnswered: ["Size and floors", "New construction, empty", "March move-in", "Wants principal designer on site"],
     openQuestions: ["Family size and how each floor will be used", "Any architect still involved?"],
     flags: ["High value", "Principal designer requested"],
-    booking: { designerId: "snehal", start: "2026-10-09T11:00:00+05:30", durationMin: 120, mode: "site_visit", calBookingUid: "cal_8ee10", emailSentAt: "2026-10-03T10:13:00+05:30" },
+    booking: { designerId: "snehal", start: "2026-10-09T11:00:00+05:30", durationMin: 120, mode: "site_visit", status: "confirmed", calBookingUid: "cal_8ee10", emailSentAt: "2026-10-03T10:13:00+05:30" },
     transcript: [
       a("0:00", GREETING),
       c("0:05", "I'm calling about a villa project in Kalyani Nagar. My name is Anand Sharma. The property is about 5,500 square feet — ground plus two floors. Full end-to-end design."),
@@ -548,7 +548,7 @@ export const SEED_LEADS: Lead[] = [
     alreadyAnswered: ["Location and that it's new possession", "Who decides", "Parents will attend"],
     openQuestions: ["Parents' own brief", "Carpet area", "Timeline"],
     flags: ["Decision-maker uncertain"],
-    booking: { designerId: "snehal", start: "2026-10-11T11:00:00+05:30", durationMin: 60, mode: "studio", calBookingUid: "cal_8ed42", emailSentAt: "2026-10-02T11:48:00+05:30" },
+    booking: { designerId: "snehal", start: "2026-10-11T11:00:00+05:30", durationMin: 60, mode: "studio", status: "confirmed", calBookingUid: "cal_8ed42", emailSentAt: "2026-10-02T11:48:00+05:30" },
     transcript: [
       a("0:00", GREETING),
       c("0:05", "Hi — I wanted to ask about an interior project for my parents. They have a 3BHK in Hadapsar, new possession. They want a proper design."),

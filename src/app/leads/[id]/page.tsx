@@ -2,9 +2,10 @@ import { requireSession } from "@/lib/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Accordion } from "@/components/accordion";
-import { verdictLine } from "@/components/lead-row";
 import { Flag, PriorityPill, StatusPill, VerdictPill } from "@/components/pills";
 import { Reveal } from "@/components/reveal";
+import { LiveRefresh } from "@/components/live-refresh";
+import { agentDecision } from "@/lib/decision";
 import { getDesigner } from "@/lib/designers";
 import { duration, MODE_LABEL, when } from "@/lib/format";
 import { CRITERIA, CRITERIA_ORDER, STATUS_META } from "@/lib/rubric";
@@ -17,6 +18,13 @@ export async function generateMetadata({ params }: PageProps<"/leads/[id]">) {
   return { title: lead ? `${lead.callerName} · Aangan Desk` : "Not found" };
 }
 
+const DECISION_TONE: Record<Lead["status"], { box: string; label: string }> = {
+  qualified: { box: "bg-sage text-ink", label: "text-sage-deep" },
+  not_fit: { box: "bg-blush text-ink", label: "text-coral-deep" },
+  needs_review: { box: "bg-lavender text-ink", label: "text-lavender-deep" },
+  escalation: { box: "bg-ink text-cream", label: "text-coral" },
+};
+
 export default async function LeadReport({ params }: PageProps<"/leads/[id]">) {
   await requireSession();
   const lead = await getLead((await params).id);
@@ -24,11 +32,12 @@ export default async function LeadReport({ params }: PageProps<"/leads/[id]">) {
 
   const designer = getDesigner(lead.booking?.designerId);
   const evidence = new Set(lead.criteria.map((c) => c.evidenceTurn).filter((n) => n !== undefined));
-  const verdict = verdictLine(lead);
+  const decision = agentDecision(lead);
   const tally = (v: string) => lead.criteria.filter((c) => c.verdict === v).length;
 
   return (
     <article className="space-y-10">
+      <LiveRefresh seconds={30} />
       <Reveal>
         <Link href="/" className="text-sm text-muted transition-colors duration-500 hover:text-ink">
           ← All calls
@@ -42,15 +51,6 @@ export default async function LeadReport({ params }: PageProps<"/leads/[id]">) {
         </div>
         <h1 className="mt-4 text-5xl font-medium tracking-tight sm:text-6xl">{lead.callerName}</h1>
         <p className="mt-2 text-lg text-muted">{lead.headline}</p>
-        {verdict && lead.status !== "needs_review" && lead.status !== "escalation" && (
-          <p
-            className={`mt-4 inline-block rounded-2xl px-4 py-2 text-[15px] ${
-              lead.status === "not_fit" ? "bg-blush text-coral-deep" : "bg-sage text-sage-deep"
-            }`}
-          >
-            {verdict}
-          </p>
-        )}
         <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-stone-400">
           <span>{when(lead.receivedAt)}</span>
           <span>{duration(lead.durationSec)} call</span>
@@ -60,16 +60,22 @@ export default async function LeadReport({ params }: PageProps<"/leads/[id]">) {
         </p>
       </Reveal>
 
-      {lead.nextStep && (
-        <Reveal>
-          <div
-            className={`rounded-[2rem] p-6 ${lead.status === "escalation" ? "bg-blush text-coral-deep" : "bg-lavender text-lavender-deep"}`}
-          >
-            <p className="text-sm font-medium">Next step</p>
-            <p className="mt-1 text-xl leading-snug text-ink">{lead.nextStep}</p>
+      <Reveal>
+        <section className={`rounded-[2rem] p-6 sm:p-8 ${DECISION_TONE[lead.status].box}`} aria-label="Agent's decision">
+          <p className={`text-sm font-medium ${DECISION_TONE[lead.status].label}`}>Agent&rsquo;s decision</p>
+          <h2 className="mt-1 text-3xl font-medium tracking-tight sm:text-4xl">{decision.title}</h2>
+          <p className="mt-3 max-w-2xl text-lg leading-relaxed">{decision.body}</p>
+          {lead.status === "qualified" && lead.priority && lead.priorityReason && (
+            <p className={`mt-3 text-[15px] ${DECISION_TONE[lead.status].label}`}>
+              {lead.priority[0].toUpperCase() + lead.priority.slice(1)} priority — {lead.priorityReason}
+            </p>
+          )}
+          <div className="mt-6 flex items-center gap-3">
+            <span className="h-px w-8 bg-current opacity-40" />
+            <span className="font-hand text-2xl opacity-70">Aangan voice agent</span>
           </div>
-        </Reveal>
-      )}
+        </section>
+      </Reveal>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
         <div className="space-y-10">
@@ -137,7 +143,9 @@ export default async function LeadReport({ params }: PageProps<"/leads/[id]">) {
           <Reveal>
             {lead.booking && designer ? (
               <div className="rounded-[2rem] bg-ink p-6 text-cream">
-                <p className="text-sm text-stone-400">Consultation booked</p>
+                <p className={`text-sm ${lead.booking.status === "confirmed" ? "text-stone-400" : "text-coral"}`}>
+                  {lead.booking.status === "confirmed" ? "On the designer\u2019s calendar" : "Slot held \u2014 not on the calendar yet"}
+                </p>
                 <p className="mt-2 text-2xl font-medium tracking-tight">{when(lead.booking.start)}</p>
                 <p className="mt-1 text-stone-300">
                   {MODE_LABEL[lead.booking.mode]} · {lead.booking.durationMin} min

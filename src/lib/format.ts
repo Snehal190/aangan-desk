@@ -1,4 +1,6 @@
-import { formatIST } from "./store";
+export function formatIST(iso: string, opts: Intl.DateTimeFormatOptions) {
+  return new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", ...opts }).format(new Date(iso));
+}
 
 export function when(iso: string) {
   return formatIST(iso, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });

@@ -1,3 +1,4 @@
+import { LiveRefresh } from "@/components/live-refresh";
 import { requireSession } from "@/lib/session";
 import Link from "next/link";
 import { Reveal } from "@/components/reveal";
@@ -26,6 +27,7 @@ export default async function DesignerView({ searchParams }: PageProps<"/designe
 
   return (
     <div className="space-y-12">
+      <LiveRefresh />
       <Reveal className="pt-6">
         <h1 className="text-5xl font-medium tracking-tight sm:text-6xl">
           Hi <span className="font-hand text-6xl font-normal text-coral-deep sm:text-7xl">{designer.name}</span>

@@ -48,6 +48,9 @@ export interface Booking {
   start: string;
   durationMin: number;
   mode: "site_visit" | "studio" | "video";
+  /** confirmed = on the designer's Cal.com calendar; held = agreed on the
+   *  call but not yet on the calendar (Cal.com not connected or it failed). */
+  status: "confirmed" | "held";
   calBookingUid?: string;
   emailSentAt?: string;
 }
