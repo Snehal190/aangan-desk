@@ -19,6 +19,9 @@ const FILTERS: { key: string; label: string }[] = [
   ...(["qualified", "not_fit", "needs_review", "escalation"] as LeadStatus[]).map((s) => ({ key: s, label: STATUS_META[s].label })),
 ];
 
+// Loading the dashboard may finish late reports in after() (see below).
+export const maxDuration = 300;
+
 export default async function Inbox({ searchParams }: PageProps<"/desk">) {
   await requireSession();
   const raw = (await searchParams).status;

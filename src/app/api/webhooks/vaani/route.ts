@@ -5,6 +5,10 @@ import { findEnquiryByRoom } from "@/lib/store";
 
 // Vaani AI call events. Configure in Vaani → Settings → Webhooks as
 //   <APP_URL>/api/webhooks/vaani?key=<VAANI_WEBHOOK_SECRET>
+// Writing a report waits for Vaani's transcript, then Gemini, Cal.com,
+// email and HubSpot — allow up to 5 minutes in after().
+export const maxDuration = 300;
+
 export async function POST(req: Request) {
   if (!verifyWebhook(req)) return Response.json({ error: "unauthorised" }, { status: 401 });
   const ev = parseWebhook(await req.json().catch(() => null));
