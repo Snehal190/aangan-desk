@@ -1,7 +1,7 @@
 // Creates the Aangan enquiry agent in Vaani AI, or updates it when
 // VAANI_AGENT_ID is already set. Re-run after editing /knowledge:
 //   npm run vaani:sync  (scripts/vaani-agent.mts)
-import { openSlots, systemPrompt, VAANI_END_PHRASE, webGreeting } from "../src/lib/agent/agent";
+import { offerableSlots, systemPrompt, VAANI_END_PHRASE, webGreeting } from "../src/lib/agent/agent";
 
 const API = "https://api.vaanivoice.ai";
 const key = process.env.VAANI_API_KEY;
@@ -12,7 +12,7 @@ const persona = {
   identity: {
     personality: { tone: "warm", style: "calm, concise front-desk assistant" },
     greeting_message: { agent_message: webGreeting(), agent_speech_delay: 1, interruptible: true, let_user_speak_first: false },
-    system_prompt: await systemPrompt(openSlots(), { channel: "vaani" }),
+    system_prompt: await systemPrompt(await offerableSlots(), { channel: "vaani" }),
   },
   senses_capabilities: { language: "en", auto_detect: false },
   timezone: "Asia/Kolkata",

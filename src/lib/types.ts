@@ -115,6 +115,8 @@ export interface Enquiry {
   startedAt: string;
   endedAt?: string;
   roomName?: string;
+  /** Exact slots the agent was allowed to offer on this call. */
+  offeredSlots?: string[];
   status: "live" | "processing" | "done" | "failed";
   leadId?: string;
   error?: string;

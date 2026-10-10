@@ -6,7 +6,7 @@ import { parseTestCall } from "../parse";
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return Response.json({ error: "unauthorised" }, { status: 401 });
-  const body = parseTestCall(await req.json().catch(() => null));
+  const body = await parseTestCall(await req.json().catch(() => null));
   if (!body || body.transcript.length < 2) return Response.json({ error: "bad request" }, { status: 400 });
 
   const durationSec = Math.max(1, Math.round((Date.now() - Date.parse(body.startedAt)) / 1000));

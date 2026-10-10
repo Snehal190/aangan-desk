@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { openSlots, systemPrompt, webGreeting } from "@/lib/agent/agent";
+import { offerableSlots, systemPrompt, webGreeting } from "@/lib/agent/agent";
 import { startWebCall } from "@/lib/integrations/vaani";
 import { callbackLead } from "@/lib/pipeline/enquiry";
 import { saveEnquiry } from "@/lib/store";
@@ -34,10 +34,12 @@ export async function POST(req: Request) {
   const enquiry: Enquiry = { id: `ENQ-${randomUUID().slice(0, 8).toUpperCase()}`, name, startedAt, status: "live" };
 
   try {
+    const slots = await offerableSlots(new Date(startedAt));
+    enquiry.offeredSlots = slots;
     const call = await startWebCall({
       enquiryId: enquiry.id,
       callerName: name,
-      systemPrompt: await systemPrompt(openSlots(new Date(startedAt)), { channel: "vaani", callerName: name }),
+      systemPrompt: await systemPrompt(slots, { channel: "vaani", callerName: name }),
       welcomeMessage: webGreeting(name),
     });
     await saveEnquiry({ ...enquiry, roomName: call.roomName });

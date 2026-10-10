@@ -1,4 +1,6 @@
 import { DESIGNERS } from "../designers";
+import { freeSlots } from "../integrations/cal";
+import { env } from "../integrations/env";
 import { geminiGenerate } from "../integrations/gemini";
 import { loadKnowledge } from "../integrations/knowledge";
 import { formatIST } from "../format";
@@ -29,6 +31,35 @@ export function openSlots(from = new Date(), count = 6): string[] {
     slots.push(`${ymd}T11:00:00+05:30`, `${ymd}T16:00:00+05:30`);
   }
   return slots.slice(0, count);
+}
+
+/**
+ * Slots the agent may offer. With Cal.com connected these are the designer's
+ * real free times (Google Calendar busy times excluded): up to three a day —
+ * late morning, early afternoon, late afternoon — over the next four days
+ * that have any. Falls back to fixed hours if Cal.com is unavailable.
+ */
+export async function offerableSlots(from = new Date()): Promise<string[]> {
+  if (env.cal.apiKey && env.cal.eventTypeId) {
+    try {
+      return pickSpread(await freeSlots(from, 10));
+    } catch (err) {
+      console.error("Cal.com slots unavailable, using default hours", err);
+    }
+  }
+  return openSlots(from);
+}
+
+function pickSpread(free: string[]) {
+  const byDay = new Map<string, string[]>();
+  for (const s of free) byDay.set(s.slice(0, 10), [...(byDay.get(s.slice(0, 10)) ?? []), s]);
+  const hour = (s: string) => Number(s.slice(11, 13));
+  const picked: string[] = [];
+  for (const day of [...byDay.values()].slice(0, 4)) {
+    const choose = (lo: number, hi: number) => day.find((s) => hour(s) >= lo && hour(s) < hi);
+    for (const s of [choose(10, 13), choose(13, 15), choose(15, 19)]) if (s && !picked.includes(s)) picked.push(s);
+  }
+  return picked.length ? picked : free.slice(0, 6);
 }
 
 export const slotLabel = (iso: string) =>

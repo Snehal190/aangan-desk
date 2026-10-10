@@ -22,6 +22,7 @@ export const env = {
   cal: {
     apiKey: process.env.CAL_API_KEY,
     eventSlug: process.env.CAL_EVENT_SLUG ?? "consultation",
+    eventTypeId: process.env.CAL_EVENT_TYPE_ID,
   },
   resend: {
     apiKey: process.env.RESEND_API_KEY,
@@ -29,6 +30,7 @@ export const env = {
   },
   hubspot: {
     token: process.env.HUBSPOT_TOKEN,
+    personalAccessKey: process.env.HUBSPOT_PERSONAL_ACCESS_KEY,
     pipelineId: process.env.HUBSPOT_PIPELINE_ID,
     stageQualified: process.env.HUBSPOT_STAGE_QUALIFIED,
   },
@@ -38,9 +40,9 @@ export const INTEGRATIONS = [
   { key: "neon", name: "Neon", role: "Database for calls and reports", configured: () => !!env.databaseUrl, vars: ["DATABASE_URL"] },
   { key: "vaani", name: "Vaani AI", role: "Voice agent for website enquiries (WebRTC) + post-call transcript", configured: () => !!env.vaani.apiKey && !!env.vaani.agentId, vars: ["VAANI_API_KEY", "VAANI_AGENT_ID", "VAANI_WEBHOOK_SECRET"] },
   { key: "gemini", name: "Gemini", role: `Rubric scoring and handoff note · ${env.gemini.apiKeys.length} key(s) in rotation`, configured: () => env.gemini.apiKeys.length > 0, vars: ["GEMINI_API_KEYS", "GEMINI_MODEL"] },
-  { key: "cal", name: "Cal.com", role: "Books the designer's slot", configured: () => !!env.cal.apiKey, vars: ["CAL_API_KEY", "CAL_EVENT_SLUG"] },
+  { key: "cal", name: "Cal.com", role: "Books the designer's slot", configured: () => !!env.cal.apiKey && !!env.cal.eventTypeId, vars: ["CAL_API_KEY", "CAL_EVENT_TYPE_ID", "CAL_USERNAME"] },
   { key: "resend", name: "Resend", role: "Emails the report to the designer", configured: () => !!env.resend.apiKey, vars: ["RESEND_API_KEY", "RESEND_FROM"] },
-  { key: "hubspot", name: "HubSpot", role: "Founder's view — contact, deal and call note", configured: () => !!env.hubspot.token, vars: ["HUBSPOT_TOKEN", "HUBSPOT_PIPELINE_ID", "HUBSPOT_STAGE_QUALIFIED"] },
+  { key: "hubspot", name: "HubSpot", role: "Founder's view — contact, deal and call note", configured: () => !!env.hubspot.token?.startsWith("pat-"), vars: ["HUBSPOT_TOKEN (pat-…)"] },
 ] as const;
 
 export class NotConfiguredError extends Error {

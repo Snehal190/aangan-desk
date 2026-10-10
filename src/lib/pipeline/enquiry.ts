@@ -88,7 +88,7 @@ export async function finishEnquiry(enquiryId: string, given?: { transcript?: st
       pickupSec: 0,
       language: "English",
       transcript,
-      offeredSlots: openSlots(new Date(e.startedAt)),
+      offeredSlots: e.offeredSlots ?? openSlots(new Date(e.startedAt)),
       flags: ["Web enquiry"],
     });
     await saveEnquiry({ ...e, endedAt, status: "done", leadId: lead.id, error: undefined });
