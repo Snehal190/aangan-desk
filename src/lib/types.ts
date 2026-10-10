@@ -119,6 +119,8 @@ export interface Enquiry {
   /** Exact slots the agent was allowed to offer on this call. */
   offeredSlots?: string[];
   status: "live" | "processing" | "done" | "failed";
+  /** When the current processing attempt started — lets a crashed attempt be retried. */
+  processingAt?: string;
   leadId?: string;
   error?: string;
 }

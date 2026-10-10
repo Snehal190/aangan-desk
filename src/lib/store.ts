@@ -124,18 +124,28 @@ export async function listOpenEnquiries() {
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
 }
 
+/** A "processing" attempt older than this is assumed dead (server restart,
+ *  function timeout) and may be claimed again. */
+const STALE_MS = 6 * 60_000;
+
 /** Atomically move an enquiry to "processing" so the webhook and the
  *  end-of-call fetch never write the same report twice. */
 export async function claimEnquiry(id: string): Promise<Enquiry | undefined> {
+  const now = new Date().toISOString();
+  const staleBefore = new Date(Date.now() - STALE_MS).toISOString();
   if (!sql) {
     const e = await getEnquiry(id);
-    if (!e || e.status === "processing" || e.status === "done") return undefined;
-    return saveEnquiry({ ...e, status: "processing" });
+    if (!e || e.status === "done") return undefined;
+    if (e.status === "processing" && (e.processingAt ?? e.endedAt ?? e.startedAt) > staleBefore) return undefined;
+    return saveEnquiry({ ...e, status: "processing", processingAt: now });
   }
   const rows = await sql`
     update enquiries
-       set data = jsonb_set(data, '{status}', '"processing"')
-     where id = ${id} and data->>'status' in ('live', 'failed')
+       set data = data || jsonb_build_object('status', 'processing', 'processingAt', ${now}::text)
+     where id = ${id}
+       and (data->>'status' in ('live', 'failed')
+            or (data->>'status' = 'processing'
+                and coalesce(data->>'processingAt', data->>'endedAt', data->>'startedAt') < ${staleBefore}))
     returning data`;
   return rows[0]?.data as Enquiry | undefined;
 }

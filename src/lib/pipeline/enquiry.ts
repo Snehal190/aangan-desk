@@ -20,7 +20,13 @@ async function waitForTranscript(roomName: string) {
 /** Re-try enquiries whose transcript wasn't ready (no webhook reaches localhost). */
 export async function retryStuckEnquiries() {
   const open = await listOpenEnquiries();
-  const stuck = open.filter((e) => e.status === "failed" || (e.status === "live" && e.endedAt));
+  const staleBefore = new Date(Date.now() - 6 * 60_000).toISOString();
+  const stuck = open.filter(
+    (e) =>
+      e.status === "failed" ||
+      (e.status === "live" && e.endedAt && e.endedAt < staleBefore) ||
+      (e.status === "processing" && (e.processingAt ?? e.endedAt ?? e.startedAt) < staleBefore),
+  );
   await Promise.all(stuck.map((e) => finishEnquiry(e.id)));
   return stuck.length;
 }

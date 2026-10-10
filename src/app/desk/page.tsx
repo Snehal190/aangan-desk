@@ -42,7 +42,7 @@ export default async function Inbox({ searchParams }: PageProps<"/desk">) {
 
   const [all, stats, inFlight] = await Promise.all([listLeads(), getStats(), listOpenEnquiries()]);
   // Vaani's webhook can't reach a laptop, so the dashboard also picks up late transcripts.
-  if (inFlight.some((e) => e.status === "failed")) after(() => retryStuckEnquiries());
+  if (inFlight.some((e) => e.status !== "live" || e.endedAt)) after(() => retryStuckEnquiries());
   const attention = all.filter(needsAttention);
   const shown =
     filter === "all" ? all : filter === "attention" ? attention : all.filter((l) => l.status === filter);
@@ -103,7 +103,7 @@ export default async function Inbox({ searchParams }: PageProps<"/desk">) {
                   ? "On a call with the agent"
                   : e.status === "failed"
                     ? "Waiting for the transcript"
-                    : "Call ended · writing the report";
+                    : "Call ended · writing the report (usually 1–2 min)";
               return (
                 <div key={e.id} className="flex items-center gap-4 rounded-[2rem] bg-white p-5 shadow-soft">
                   <span
