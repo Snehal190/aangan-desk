@@ -7,9 +7,9 @@ import { env, NotConfiguredError } from "./env";
 // Founder's view in HubSpot: every call becomes a contact + a deal in the
 // "Aangan enquiries" pipeline, with the report attached as a note.
 //
-// Auth: a private-app token (pat-…) if set, otherwise a personal access key
-// exchanged for a short-lived access token. Writes need the contacts + deals
-// write scopes.
+// Auth: a service key / private-app token (HUBSPOT_TOKEN) used as a Bearer
+// token; otherwise a personal access key exchanged for a short-lived token
+// (read-only in practice). Writes need the contacts + deals write scopes.
 const API = "https://api.hubapi.com";
 const PIPELINE_LABEL = "Aangan enquiries";
 const STAGES = [
@@ -24,7 +24,7 @@ const STAGES = [
 let cached: { token: string; expires: number } | undefined;
 
 async function token() {
-  if (env.hubspot.token?.startsWith("pat-")) return env.hubspot.token;
+  if (env.hubspot.token) return env.hubspot.token;
   if (!env.hubspot.personalAccessKey) throw new NotConfiguredError("HubSpot");
   if (cached && cached.expires > Date.now() + 60_000) return cached.token;
   const res = await fetch(`${API}/localdevauth/v1/auth/refresh`, {

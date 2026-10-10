@@ -91,8 +91,8 @@ export async function processCall(
     }
   }
 
-  // Needs a private-app token (pat-…); a personal access key is read-only.
-  if (env.hubspot.token?.startsWith("pat-")) {
+  // Needs a service key / private-app token; a personal access key is read-only.
+  if (env.hubspot.token) {
     try {
       lead.hubspotDealId = (await syncLeadToHubSpot(lead)).dealId;
     } catch (e) {

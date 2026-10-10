@@ -42,7 +42,7 @@ export const INTEGRATIONS = [
   { key: "gemini", name: "Gemini", role: `Rubric scoring and handoff note · ${env.gemini.apiKeys.length} key(s) in rotation`, configured: () => env.gemini.apiKeys.length > 0, vars: ["GEMINI_API_KEYS", "GEMINI_MODEL"] },
   { key: "cal", name: "Cal.com", role: "Books the designer's slot", configured: () => !!env.cal.apiKey && !!env.cal.eventTypeId, vars: ["CAL_API_KEY", "CAL_EVENT_TYPE_ID", "CAL_USERNAME"] },
   { key: "resend", name: "Resend", role: "Emails the report to the designer", configured: () => !!env.resend.apiKey, vars: ["RESEND_API_KEY", "RESEND_FROM"] },
-  { key: "hubspot", name: "HubSpot", role: "Founder's view — contact, deal and call note", configured: () => !!env.hubspot.token?.startsWith("pat-"), vars: ["HUBSPOT_TOKEN (pat-…)"] },
+  { key: "hubspot", name: "HubSpot", role: "Founder's view — contact, deal and call note", configured: () => !!env.hubspot.token, vars: ["HUBSPOT_TOKEN (service key)"] },
 ] as const;
 
 export class NotConfiguredError extends Error {
