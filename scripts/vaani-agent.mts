@@ -14,7 +14,19 @@ const persona = {
     greeting_message: { agent_message: webGreeting(), agent_speech_delay: 1, interruptible: true, let_user_speak_first: false },
     system_prompt: await systemPrompt(await offerableSlots(), { channel: "vaani" }),
   },
-  senses_capabilities: { language: "en", auto_detect: false },
+  senses_capabilities: {
+    language: "en",
+    auto_detect: false,
+    // Vaani has disabled Azure (their default fallback) and requires the
+    // fallback to be a different provider from the primary.
+    brain: {
+      llm: {
+        primary: { provider: "google", model: "gemini-3.5-flash", parameters: { temperature: 0.5, top_p: 1, max_tokens: 500 } },
+        fallback: { provider: "openai", model: "gpt-4o-mini", parameters: { temperature: 0.5, top_p: 1, max_tokens: 500 } },
+        auto_detect: false,
+      },
+    },
+  },
   timezone: "Asia/Kolkata",
 };
 const experience = {
