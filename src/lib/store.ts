@@ -74,6 +74,7 @@ export async function getStats() {
     return h < 10 || h >= 19;
   });
   return {
+    now: new Date().toISOString(),
     calls: leads.length,
     avgPickupSec: leads.reduce((s, l) => s + l.pickupSec, 0) / Math.max(leads.length, 1),
     qualifiedPct: Math.round((qualified.length / Math.max(decided.length, 1)) * 100),

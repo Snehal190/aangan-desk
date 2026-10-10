@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getDesigner } from "@/lib/designers";
 import { duration, when } from "@/lib/format";
 import type { Lead, LeadStatus } from "@/lib/types";
-import { Flag, PriorityPill, StatusPill } from "./pills";
+import { Flag, PriorityPill, Stamp } from "./pills";
 
 const CARD: Record<LeadStatus, string> = {
   qualified: "bg-white",
@@ -28,7 +28,7 @@ export function verdictLine(lead: Lead) {
   return lead.nextStep;
 }
 
-export function LeadRow({ lead }: { lead: Lead }) {
+export function LeadRow({ lead, isNew = false }: { lead: Lead; isNew?: boolean }) {
   const designer = getDesigner(lead.booking?.designerId);
   const reason = verdictLine(lead);
   return (
@@ -37,18 +37,18 @@ export function LeadRow({ lead }: { lead: Lead }) {
       className={`group block rounded-[2rem] p-5 shadow-soft transition-transform duration-500 hover:-translate-y-0.5 sm:p-6 ${CARD[lead.status]}`}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <StatusPill status={lead.status} />
+        {isNew && <span className="rounded-full bg-coral px-2.5 py-0.5 text-xs font-semibold text-ink">New</span>}
         {lead.priority && <PriorityPill priority={lead.priority} />}
         <span className="text-sm text-stone-400">
           {when(lead.receivedAt)} · {duration(lead.durationSec)}
           {lead.email ? ` · ${lead.email}` : ""}
         </span>
       </div>
-      <div className="mt-3 flex items-baseline justify-between gap-4">
+      <div className="mt-3 flex items-start justify-between gap-4">
         <h3 className="text-xl font-medium tracking-tight text-stone-800 transition-colors duration-500 group-hover:text-coral-deep">
           {lead.callerName}
         </h3>
-        <span aria-hidden className="text-muted transition-transform duration-500 group-hover:translate-x-1">→</span>
+        <Stamp status={lead.status} />
       </div>
       <p className="mt-1 text-[15px] text-muted">{lead.headline}</p>
       {reason && <p className={`mt-3 text-[15px] leading-snug ${REASON_TONE[lead.status]}`}>{reason}</p>}
@@ -67,6 +67,7 @@ export function LeadRow({ lead }: { lead: Lead }) {
           {lead.status === "qualified" && !lead.booking && (
             <span className="rounded-full bg-blush px-2.5 py-0.5 text-xs text-coral-deep">Needs a booking</span>
           )}
+          {lead.recordingId && <Flag>▶ Recording</Flag>}
           {lead.flags.map((f) => (
             <Flag key={f}>{f}</Flag>
           ))}

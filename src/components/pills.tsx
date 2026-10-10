@@ -56,3 +56,25 @@ export function VerdictPill({ verdict }: { verdict: Verdict }) {
 export function Flag({ children }: { children: React.ReactNode }) {
   return <span className="rounded-full border border-stone-200 bg-white px-2.5 py-0.5 text-xs text-muted">{children}</span>;
 }
+
+const STAMP: Record<LeadStatus | "processing", { text: string; cls: string }> = {
+  qualified: { text: "Qualified", cls: "border-sage-deep text-sage-deep" },
+  not_fit: { text: "Not qualified", cls: "border-coral-deep text-coral-deep" },
+  needs_review: { text: "Needs review", cls: "border-lavender-deep text-lavender-deep" },
+  escalation: { text: "Escalation", cls: "border-ink text-ink" },
+  processing: { text: "Processing", cls: "border-stone-400 text-stone-500 border-dashed" },
+};
+
+/** Rubber-stamp verdict, so the outcome reads at a glance. */
+export function Stamp({ status, large = false }: { status: LeadStatus | "processing"; large?: boolean }) {
+  const st = STAMP[status];
+  return (
+    <span
+      className={`inline-block shrink-0 -rotate-6 rounded-xl border-2 font-semibold tracking-[0.14em] uppercase ${st.cls} ${
+        large ? "px-4 py-1.5 text-base" : "px-2.5 py-1 text-[11px]"
+      }`}
+    >
+      {st.text}
+    </span>
+  );
+}

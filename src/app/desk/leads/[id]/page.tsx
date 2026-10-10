@@ -2,7 +2,7 @@ import { requireSession } from "@/lib/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Accordion } from "@/components/accordion";
-import { Flag, PriorityPill, StatusPill, VerdictPill } from "@/components/pills";
+import { Flag, PriorityPill, Stamp, StatusPill, VerdictPill } from "@/components/pills";
 import { Reveal } from "@/components/reveal";
 import { LiveRefresh } from "@/components/live-refresh";
 import { agentDecision } from "@/lib/decision";
@@ -49,7 +49,10 @@ export default async function LeadReport({ params }: PageProps<"/desk/leads/[id]
             <Flag key={f}>{f}</Flag>
           ))}
         </div>
-        <h1 className="mt-4 text-5xl font-medium tracking-tight sm:text-6xl">{lead.callerName}</h1>
+        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <h1 className="text-5xl font-medium tracking-tight sm:text-6xl">{lead.callerName}</h1>
+          <Stamp status={lead.status} large />
+        </div>
         <p className="mt-2 text-lg text-muted">{lead.headline}</p>
         <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-stone-400">
           <span>{when(lead.receivedAt)}</span>
@@ -133,6 +136,25 @@ export default async function LeadReport({ params }: PageProps<"/desk/leads/[id]
                     </Accordion>
                   );
                 })}
+              </div>
+            </Reveal>
+          )}
+
+          {lead.recordingId && (
+            <Reveal>
+              <div className="rounded-[2rem] bg-white p-5 shadow-soft sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xl tracking-tight">Call recording</p>
+                  <a
+                    href={`/api/recording/${lead.id}?download`}
+                    className="rounded-full border border-stone-200 px-3 py-1 text-sm text-muted transition-colors duration-500 hover:text-ink"
+                  >
+                    Download
+                  </a>
+                </div>
+                <audio controls preload="none" src={`/api/recording/${lead.id}`} className="mt-4 w-full">
+                  Your browser can&rsquo;t play this recording — use Download instead.
+                </audio>
               </div>
             </Reveal>
           )}

@@ -103,6 +103,8 @@ export interface Lead {
   /** Next step for the front desk when status is needs_review / escalation. */
   nextStep?: string;
   transcript: TranscriptTurn[];
+  /** Vaani call/room id — the recording is streamed from Vaani with it. */
+  recordingId?: string;
   hubspotDealId?: string;
   hubspotContactId?: string;
 }

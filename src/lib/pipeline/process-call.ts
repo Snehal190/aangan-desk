@@ -27,7 +27,7 @@ const validEmail = (e?: string) => {
 // Every step after analysis is best-effort: the lead is saved first so it is
 // on the dashboard even if email, calendar or HubSpot fail.
 export async function processCall(
-  call: CallInput & { booking?: Booking; offeredSlots?: string[]; flags?: string[]; callerName?: string },
+  call: CallInput & { booking?: Booking; offeredSlots?: string[]; flags?: string[]; callerName?: string; recordingId?: string },
 ) {
   const { bookedSlot, bookingMode, language, callerEmail, emailConfirmed, emailOwner, ...analysis } = await analyseCall(call.transcript, {
     offeredSlots: call.offeredSlots,
@@ -54,6 +54,7 @@ export async function processCall(
     durationSec: call.durationSec,
     pickupSec: call.pickupSec,
     transcript: call.transcript,
+    recordingId: call.recordingId,
     flags: [
       ...(call.flags ?? []),
       ...analysis.flags,

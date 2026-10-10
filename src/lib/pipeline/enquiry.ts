@@ -12,7 +12,7 @@ async function waitForTranscript(roomName: string) {
   for (let i = 0; i < 21; i++) {
     const t = await fetchTranscript(roomName).catch(() => null);
     if (t) return t;
-    await sleep(i < 12 ? 5000 : 10000);
+    await sleep(i < 15 ? 3000 : 10000);
   }
   return null;
 }
@@ -96,6 +96,7 @@ export async function finishEnquiry(enquiryId: string, given?: { transcript?: st
       transcript,
       offeredSlots: e.offeredSlots ?? openSlots(new Date(e.startedAt)),
       flags: ["Web enquiry"],
+      recordingId: e.roomName,
     });
     await saveEnquiry({ ...e, endedAt, status: "done", leadId: lead.id, error: undefined });
   } catch (err) {
