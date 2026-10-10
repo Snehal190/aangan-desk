@@ -4,8 +4,12 @@ import { CRITERIA } from "../rubric";
 import type { Lead } from "../types";
 import { env, NotConfiguredError } from "./env";
 
-// Founder's view in HubSpot: every call becomes a contact + a deal in the
-// "Aangan enquiries" pipeline, with the report attached as a note.
+// Founder's view in HubSpot. Every call becomes (or updates) a contact whose
+// Lead status reflects the verdict, with the report attached as a note.
+// Deals: if the key may create pipelines, every call gets a deal in a
+// dedicated "Aangan enquiries" pipeline. Otherwise (free CRM / no schema
+// scope) only qualified calls get a deal, in the default pipeline's
+// "Appointment Scheduled" stage.
 //
 // Auth: a service key / private-app token (HUBSPOT_TOKEN) used as a Bearer
 // token; otherwise a personal access key exchanged for a short-lived token
@@ -51,6 +55,28 @@ async function hs<T = Record<string, unknown>>(method: string, path: string, bod
 
 type Pipeline = { id: string; label: string; stages: { id: string; label: string }[] };
 
+type DealTarget =
+  | { mode: "dedicated"; pipelineId: string; stage: (label: (typeof STAGES)[number]) => string }
+  | { mode: "default"; pipelineId: string; bookedStage: string };
+
+let target: DealTarget | undefined;
+
+/** Our own pipeline if it exists or can be created; else the default one. */
+async function dealTarget(): Promise<DealTarget> {
+  if (target) return target;
+  try {
+    const p = await ensurePipeline();
+    target = { mode: "dedicated", ...p };
+  } catch (err) {
+    if (!String(err).includes("→ 403")) throw err;
+    const { results } = await hs<{ results: Pipeline[] }>("GET", "/crm/v3/pipelines/deals");
+    const def = results.find((x) => x.id === "default") ?? results[0];
+    const booked = def.stages.find((st) => st.id === "appointmentscheduled") ?? def.stages[0];
+    target = { mode: "default", pipelineId: def.id, bookedStage: booked.id };
+  }
+  return target;
+}
+
 /** Finds (or creates) the Aangan pipeline and returns stage ids by label. */
 export async function ensurePipeline() {
   const { results } = await hs<{ results: Pipeline[] }>("GET", "/crm/v3/pipelines/deals");
@@ -71,8 +97,13 @@ export async function ensurePipeline() {
 }
 
 async function upsertContact(lead: Lead) {
-  const [firstname, ...rest] = lead.callerName.trim().split(/\s+/);
-  const properties: Record<string, string> = { firstname, lastname: rest.join(" "), lifecyclestage: "lead" };
+  const cap = (w: string) => w.charAt(0).toUpperCase() + w.slice(1);
+  const [firstname, ...rest] = lead.callerName.trim().split(/\s+/).map(cap);
+  const properties: Record<string, string> = {
+    firstname,
+    lastname: rest.join(" "),
+    hs_lead_status: { qualified: "OPEN_DEAL", not_fit: "UNQUALIFIED", needs_review: "IN_PROGRESS", escalation: "IN_PROGRESS" }[lead.status],
+  };
   if (lead.email) properties.email = lead.email;
   if (lead.phone) properties.phone = lead.phone;
 
@@ -103,35 +134,43 @@ function noteHtml(lead: Lead) {
   ].join("");
 }
 
-export async function syncLeadToHubSpot(lead: Lead): Promise<{ dealId: string }> {
-  const { pipelineId, stage } = await ensurePipeline();
+export async function syncLeadToHubSpot(lead: Lead): Promise<{ dealId?: string; contactId: string }> {
+  const t = await dealTarget();
   const contactId = await upsertContact(lead);
 
-  const dealstage =
-    lead.status === "qualified"
-      ? stage("Qualified – consultation booked")
-      : lead.status === "not_fit"
-        ? stage("Disqualified")
-        : stage("Needs review");
-  const properties = {
-    dealname: `${lead.callerName} — ${lead.headline}`.slice(0, 200),
-    pipeline: pipelineId,
-    dealstage,
-    description: lead.handoffNote.slice(0, 5000),
-    ...(lead.booking ? { closedate: new Date(lead.booking.start).toISOString() } : {}),
-  };
+  let dealstage: string | undefined;
+  if (t.mode === "dedicated") {
+    dealstage =
+      lead.status === "qualified"
+        ? t.stage("Qualified – consultation booked")
+        : lead.status === "not_fit"
+          ? t.stage("Disqualified")
+          : t.stage("Needs review");
+  } else if (lead.status === "qualified") {
+    dealstage = t.bookedStage;
+  }
 
-  const dealId = lead.hubspotDealId
-    ? (await hs<{ id: string }>("PATCH", `/crm/v3/objects/deals/${lead.hubspotDealId}`, { properties })).id
-    : (await hs<{ id: string }>("POST", "/crm/v3/objects/deals", { properties })).id;
+  let dealId = lead.hubspotDealId;
+  if (dealstage) {
+    const properties = {
+      dealname: `${lead.callerName.replace(/(^|\s)(\p{Ll})/gu, (_, sp: string, c: string) => sp + c.toUpperCase())} — ${lead.headline}`.slice(0, 200),
+      pipeline: t.pipelineId,
+      dealstage,
+      description: lead.handoffNote.slice(0, 5000),
+      ...(lead.booking ? { closedate: new Date(lead.booking.start).toISOString() } : {}),
+    };
+    dealId = dealId
+      ? (await hs<{ id: string }>("PATCH", `/crm/v3/objects/deals/${dealId}`, { properties })).id
+      : (await hs<{ id: string }>("POST", "/crm/v3/objects/deals", { properties })).id;
+    await hs("PUT", `/crm/v4/objects/deals/${dealId}/associations/default/contacts/${contactId}`);
+  }
 
-  await hs("PUT", `/crm/v4/objects/deals/${dealId}/associations/default/contacts/${contactId}`);
   await hs("POST", "/crm/v3/objects/notes", {
     properties: { hs_timestamp: new Date().toISOString(), hs_note_body: noteHtml(lead) },
     associations: [
-      { to: { id: dealId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 214 }] },
       { to: { id: contactId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 202 }] },
+      ...(dealId ? [{ to: { id: dealId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 214 }] }] : []),
     ],
   });
-  return { dealId };
+  return { dealId, contactId };
 }

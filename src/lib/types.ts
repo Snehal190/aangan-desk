@@ -104,6 +104,7 @@ export interface Lead {
   nextStep?: string;
   transcript: TranscriptTurn[];
   hubspotDealId?: string;
+  hubspotContactId?: string;
 }
 
 /** A website enquiry call, tracked from "Call us" to finished report. */

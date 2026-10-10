@@ -94,7 +94,9 @@ export async function processCall(
   // Needs a service key / private-app token; a personal access key is read-only.
   if (env.hubspot.token) {
     try {
-      lead.hubspotDealId = (await syncLeadToHubSpot(lead)).dealId;
+      const hs = await syncLeadToHubSpot(lead);
+      lead.hubspotDealId = hs.dealId;
+      lead.hubspotContactId = hs.contactId;
     } catch (e) {
       errors.push(String(e));
     }

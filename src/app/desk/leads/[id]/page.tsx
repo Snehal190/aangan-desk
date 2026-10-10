@@ -195,7 +195,11 @@ export default async function LeadReport({ params }: PageProps<"/desk/leads/[id]
           </Reveal>
 
           <p className="px-2 text-sm text-stone-400">
-            {lead.hubspotDealId ? `Synced to HubSpot · ${lead.hubspotDealId}` : "Not synced to HubSpot"}
+            {lead.hubspotDealId
+              ? `In HubSpot · deal ${lead.hubspotDealId}`
+              : lead.hubspotContactId
+                ? `In HubSpot · contact ${lead.hubspotContactId}`
+                : "Not synced to HubSpot"}
           </p>
         </aside>
       </div>
