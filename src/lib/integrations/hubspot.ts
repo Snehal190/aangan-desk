@@ -8,8 +8,9 @@ import { env, NotConfiguredError } from "./env";
 // Lead status reflects the verdict, with the report attached as a note.
 // Deals: if the key may create pipelines, every call gets a deal in a
 // dedicated "Aangan enquiries" pipeline. Otherwise (free CRM / no schema
-// scope) only qualified calls get a deal, in the default pipeline's
-// "Appointment Scheduled" stage.
+// scope) only qualified calls get a deal in the default pipeline:
+// "Appointment Scheduled" when the consultation is on the calendar,
+// "Qualified To Buy" when it still needs booking.
 //
 // Auth: a service key / private-app token (HUBSPOT_TOKEN) used as a Bearer
 // token; otherwise a personal access key exchanged for a short-lived token
@@ -57,7 +58,7 @@ type Pipeline = { id: string; label: string; stages: { id: string; label: string
 
 type DealTarget =
   | { mode: "dedicated"; pipelineId: string; stage: (label: (typeof STAGES)[number]) => string }
-  | { mode: "default"; pipelineId: string; bookedStage: string };
+  | { mode: "default"; pipelineId: string; bookedStage: string; qualifiedStage: string };
 
 let target: DealTarget | undefined;
 
@@ -72,7 +73,8 @@ async function dealTarget(): Promise<DealTarget> {
     const { results } = await hs<{ results: Pipeline[] }>("GET", "/crm/v3/pipelines/deals");
     const def = results.find((x) => x.id === "default") ?? results[0];
     const booked = def.stages.find((st) => st.id === "appointmentscheduled") ?? def.stages[0];
-    target = { mode: "default", pipelineId: def.id, bookedStage: booked.id };
+    const qualified = def.stages.find((st) => st.id === "qualifiedtobuy") ?? booked;
+    target = { mode: "default", pipelineId: def.id, bookedStage: booked.id, qualifiedStage: qualified.id };
   }
   return target;
 }
@@ -147,7 +149,8 @@ export async function syncLeadToHubSpot(lead: Lead): Promise<{ dealId?: string; 
           ? t.stage("Disqualified")
           : t.stage("Needs review");
   } else if (lead.status === "qualified") {
-    dealstage = t.bookedStage;
+    // Only a consultation that is really on the calendar counts as scheduled.
+    dealstage = lead.booking?.status === "confirmed" ? t.bookedStage : t.qualifiedStage;
   }
 
   let dealId = lead.hubspotDealId;
